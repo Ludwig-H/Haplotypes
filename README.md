@@ -17,7 +17,7 @@ Le benchmark reste volontairement simple : il isole le problème statistique d�
 On considère une paire de chromosomes homologues, discrétisés sur
 
 $$
-\{0,\ldots,L-1\}.
+\\{0,\\ldots,L-1\\}.
 $$
 
 Chaque lecture $i$ est définie par :
@@ -27,13 +27,13 @@ Chaque lecture $i$ est définie par :
 * un haplotype d’origine caché
 
 $$
-\Sigma_i\in\{-1,+1\}.
+\\Sigma_i\in\\{-1,+1\\}.
 $$
 
 La lecture couvre l’intervalle
 
 $$
-I_i=[x_i-\ell,x_i+\ell]\cap \{0,\ldots,L-1\}.
+I_i=[x_i-\ell,x_i+\ell]\cap \\{0,\\ldots,L-1\\}.
 $$
 
 L’objectif est de reconstruire les $\Sigma_i$ à partir des lectures bruitées.
@@ -198,7 +198,7 @@ Le chromosome 22 est le meilleur choix pour les tests initiaux : il est suffisam
 
 Le benchmark utilise par défaut uniquement des SNPs bialléliques hétérozygotes.
 
-Chaque position $(z\in{0,\ldots,L-1})$ est hétérozygote avec probabilité
+Chaque position $(z\in\\{0,\\ldots,L-1\\})$ est hétérozygote avec probabilité
 
 $$
 \rho_{\mathrm{het}}.
@@ -213,7 +213,7 @@ $$
 L’ensemble des sites hétérozygotes est
 
 $$
-\mathcal V=\{z:\ H_z=1\}.
+\\mathcal V=\\{z:\\ H_z=1\\}.
 $$
 
 Le nombre de variants hétérozygotes vérifie
@@ -274,7 +274,7 @@ Le preset `toy_dense` est utile pour les petites instances et les tests algorith
 On encode l’orientation du site par
 
 $$
-A_z\in\{-1,+1\}.
+A_z\in\\{-1,+1\\}.
 $$
 
 Pour une lecture issue de l’haplotype $\Sigma_i$, l’allèle vrai au site $z$ est
@@ -299,13 +299,13 @@ L’orientation $A_z$ disparaît donc dans les comparaisons entre lectures.
 Dans le modèle de base, chaque lecture a une position centrale $x_i$ tirée uniformément :
 
 $$
-x_i\sim \text{Unif}\{0,\ldots,L-1\}.
+x_i\sim \text{Unif}\\{0,\\ldots,L-1\\}.
 $$
 
 La lecture couvre
 
 $$
-I_i=[x_i-\ell,x_i+\ell]\cap \{0,\ldots,L-1\}.
+I_i=[x_i-\ell,x_i+\ell]\cap \\{0,\\ldots,L-1\\}.
 $$
 
 L’haplotype d’origine est tiré selon
@@ -485,12 +485,12 @@ On définit :
 
 $$
 c_{ij} =
-= {z\in S_{ij}: V_{ijz}=+1},
+=\\{z\in S_{ij}: V_{ijz}=+1\\},
 $$
 
 $$
 d_{ij} =
-= {z\in S_{ij}: V_{ijz}=-1}.
+=\\{z\in S_{ij}: V_{ijz}=-1\\}.
 $$
 
 Ainsi,
@@ -536,9 +536,9 @@ $$
 W_{ij} =
 \log
 \frac{
-\mathbb P(\{V_{ijz}\}_{z\in S_{ij}}\mid \Sigma_i\Sigma_j=+1)
+\mathbb P(\\{V_{ijz}\\}_{z\in S_{ij}}\mid \Sigma_i\Sigma_j=+1)
 }{
-\mathbb P(\{V_{ijz}\}_{z\in S_{ij}}\mid \Sigma_i\Sigma_j=-1)
+\mathbb P(\\{V_{ijz}\\}_{z\in S_{ij}}\mid \Sigma_i\Sigma_j=-1)
 }.
 $$
 
@@ -634,7 +634,7 @@ Si $z$ est vraiment hétérozygote, le vote est informatif comme précédemment.
 
 Si $z$ n’est pas hétérozygote, le vote ne porte pas d’information sur $\Sigma_i\Sigma_j$.
 
-On note $R_{ijz}(v)$ la probabilité d’observer le vote $(v\in\{-1,+1\})$ lorsque le site n’est pas hétérozygote. Dans le modèle symétrique simple :
+On note $R_{ijz}(v)$ la probabilité d’observer le vote $(v\in\\{-1,+1\\})$ lorsque le site n’est pas hétérozygote. Dans le modèle symétrique simple :
 
 $$
 R_{ijz}(+1)=q_{ijz},
@@ -760,7 +760,7 @@ $$
 \propto
 \exp
 \left(
-\sum_{\{i,j\}\in E}
+\sum_{{i,j}\in E}
 W_{ij}\sigma_i\sigma_j
 \right).
 $$
@@ -769,10 +769,10 @@ $$
 
 $$
 U(\sigma) =
-\sum_{\{i,j\}:W_{ij}>0}
+\sum_{{i,j}:W_{ij}>0}
 |W_{ij}|\mathbf 1_{\sigma_i\neq\sigma_j}
 +
-\sum_{\{i,j\}:W_{ij}<0}
+\sum_{{i,j}:W_{ij}<0}
 |W_{ij}|\mathbf 1_{\sigma_i=\sigma_j}.
 $$
 
