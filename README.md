@@ -149,7 +149,7 @@ Le nombre de lectures ne doit pas être fixé à la main par défaut. Il est cal
 Si les lectures ont longueur moyenne $\mathbb E[R]$, alors
 
 $$
-n_{\rm reads} =
+n_{\mathrm{reads}} =
 \left\lceil
 \frac{cL}{\mathbb E[R]}
 \right\rceil.
@@ -158,7 +158,7 @@ $$
 Dans le cas paired-end, si une molécule produit deux lectures de longueur $R$, alors
 
 $$
-n_{\rm pairs} =
+n_{\mathrm{pairs}} =
 \left\lceil
 \frac{cL}{2R}
 \right\rceil.
@@ -167,7 +167,7 @@ $$
 Dans le modèle à longueur fixée $R=2\ell+1$,
 
 $$
-n_{\rm reads} =
+n_{\mathrm{reads}} =
 \left\lceil
 \frac{cL}{2\ell+1}
 \right\rceil.
@@ -198,34 +198,34 @@ Le chromosome 22 est le meilleur choix pour les tests initiaux : il est suffisam
 
 Le benchmark utilise par défaut uniquement des SNPs bialléliques hétérozygotes.
 
-Chaque position $z\in{0,\ldots,L-1}$ est hétérozygote avec probabilité
+Chaque position $(z\in{0,\ldots,L-1})$ est hétérozygote avec probabilité
 
 $$
-\rho_{\rm het}.
+\rho_{\mathrm{het}}.
 $$
 
 Dans le modèle Bernoulli homogène :
 
 $$
-H_z\sim \operatorname{Bernoulli}(\rho_{\rm het}).
+H_z\sim \text{Bernoulli}(\rho_{\mathrm{het}}).
 $$
 
 L’ensemble des sites hétérozygotes est
 
 $$
-\mathcal V={z:\ H_z=1}.
+\mathcal V=\{z:\ H_z=1\}.
 $$
 
 Le nombre de variants hétérozygotes vérifie
 
 $$
-|\mathcal V|\sim \operatorname{Bin}(L,\rho_{\rm het}),
+|\mathcal V|\sim \text{Bin}(L,\rho_{\mathrm{het}}),
 $$
 
 et donc
 
 $$
-\mathbb E[|\mathcal V|]=L\rho_{\rm het}.
+\mathbb E[|\mathcal V|]=L\rho_{\mathrm{het}}.
 $$
 
 ### Densités recommandées
@@ -247,21 +247,21 @@ variant_presets:
 
 Interprétation approximative :
 
-| Preset          | Densité $\rho_{\rm het}$ | Distance moyenne |
+| Preset          | Densité $\rho_{\mathrm{het}}$ | Distance moyenne |
 | --------------- | -----------------------: | ---------------: |
 | `human_sparse`  |         $5\cdot 10^{-4}$ | 1 site / 2000 bp |
 | `human_default` |       $7.5\cdot 10^{-4}$ | 1 site / 1333 bp |
 | `human_high`    |                $10^{-3}$ | 1 site / 1000 bp |
 | `toy_dense`     |         $2\cdot 10^{-3}$ |  1 site / 500 bp |
 
-Pour chr22, avec $L=50,818,468$, cela donne en moyenne :
+Pour chr22, avec $(L=50,818,468)$, cela donne en moyenne :
 
 | Preset          | Variants attendus |
 | --------------- | ----------------: |
-| `human_sparse`  |  $\approx 25,409$ |
-| `human_default` |  $\approx 38,114$ |
-| `human_high`    |  $\approx 50,818$ |
-| `toy_dense`     | $\approx 101,637$ |
+| `human_sparse`  |  $(\approx 25,409)$ |
+| `human_default` |  $(\approx 38,114)$ |
+| `human_high`    |  $(\approx 50,818)$ |
+| `toy_dense`     | $(\approx 101,637)$ |
 
 Le preset `toy_dense` est utile pour les petites instances et les tests algorithmiques, mais il est trop informatif pour un modèle humain réaliste.
 
@@ -280,13 +280,13 @@ $$
 Pour une lecture issue de l’haplotype $\Sigma_i$, l’allèle vrai au site $z$ est
 
 $$
-X_{iz}^{\rm true}=\Sigma_i A_z.
+X_{iz}^{\mathrm{true}}=\Sigma_i A_z.
 $$
 
-Ainsi, pour deux lectures (i,j), au même site hétérozygote $z$, on a
+Ainsi, pour deux lectures $(i,j)$, au même site hétérozygote $z$, on a
 
 $$
-X_{iz}^{\rm true}X_{jz}^{\rm true} =
+X_{iz}^{\mathrm{true}}X_{jz}^{\mathrm{true}} =
 \Sigma_i\Sigma_j.
 $$
 
@@ -299,7 +299,7 @@ L’orientation $A_z$ disparaît donc dans les comparaisons entre lectures.
 Dans le modèle de base, chaque lecture a une position centrale $x_i$ tirée uniformément :
 
 $$
-x_i\sim \operatorname{Unif}\{0,\ldots,L-1\}.
+x_i\sim \text{Unif}\{0,\ldots,L-1\}.
 $$
 
 La lecture couvre
@@ -340,7 +340,7 @@ Pour une lecture $i$ couvrant un site hétérozygote $z$, l’allèle observé e
 
 $$
 Y_{iz} =
-= X_{iz}^{\rm true}\xi_{iz}
+= X_{iz}^{\mathrm{true}}\xi_{iz}
 
 \Sigma_i A_z\xi_{iz},
 $$
@@ -386,7 +386,7 @@ noise:
 
 ## 9. Intersections entre lectures
 
-Pour deux lectures (i,j), on définit leur région d’intersection :
+Pour deux lectures $(i,j)$, on définit leur région d’intersection :
 
 $$
 O_{ij}=I_i\cap I_j.
@@ -427,14 +427,14 @@ $$
 Conditionnellement à $r_{ij}$, dans le modèle Bernoulli homogène,
 
 $$
-m_{ij}\sim \operatorname{Bin}(r_{ij},\rho_{\rm het}).
+m_{ij}\sim \text{Bin}(r_{ij},\rho_{\mathrm{het}}).
 $$
 
 Donc
 
 $$
 \mathbb E[m_{ij}\mid r_{ij}] =
-\rho_{\rm het}r_{ij}.
+\rho_{\mathrm{het}}r_{ij}.
 $$
 
 Une arête est créée si
@@ -449,13 +449,13 @@ $$
 \mathbb P(m_{ij}\ge m_{\min}\mid r_{ij}) =
 \sum_{h=m_{\min}}^{r_{ij}}
 \binom{r_{ij}}{h}
-\rho_{\rm het}^{h}(1-\rho_{\rm het})^{r_{ij}-h}.
+\rho_{\mathrm{het}}^{h}(1-\rho_{\mathrm{het}})^{r_{ij}-h}.
 $$
 
-Pour $r_{ij}\rho_{\rm het}$ petit, l’approximation de Poisson donne
+Pour $r_{ij}\rho_{\mathrm{het}}$ petit, l’approximation de Poisson donne
 
 $$
-m_{ij}\approx \operatorname{Poisson}(\rho_{\rm het}r_{ij}).
+m_{ij}\approx \text{Poisson}(\rho_{\mathrm{het}}r_{ij}).
 $$
 
 ---
@@ -530,15 +530,15 @@ $$
 \varepsilon_{iz}(1-\varepsilon_{jz}).
 $$
 
-Le poids signé de l’arête $e={i,j}$ est le log-rapport de vraisemblance :
+Le poids signé de l’arête $(e={i,j})$ est le log-rapport de vraisemblance :
 
 $$
 W_{ij} =
 \log
 \frac{
-\mathbb P({V_{ijz}}*{z\in S*{ij}}\mid \Sigma_i\Sigma_j=+1)
+\mathbb P(\{V_{ijz}\}_{z\in S_{ij}}\mid \Sigma_i\Sigma_j=+1)
 }{
-\mathbb P({V_{ijz}}*{z\in S*{ij}}\mid \Sigma_i\Sigma_j=-1)
+\mathbb P(\{V_{ijz}\}_{z\in S_{ij}}\mid \Sigma_i\Sigma_j=-1)
 }.
 $$
 
@@ -597,7 +597,7 @@ $$
 Le signe observé est
 
 $$
-\widehat S_{ij}=\operatorname{sign}(W_{ij}).
+\widehat S_{ij}=\text{sign}(W_{ij}).
 $$
 
 Le poids absolu est
@@ -606,16 +606,16 @@ $$
 |W_{ij}|.
 $$
 
-### Remarque importante sur $\rho_{\rm het}$
+### Remarque importante sur $\rho_{\mathrm{het}}$
 
-Dans ce mode, $\rho_{\rm het}$ contrôle :
+Dans ce mode, $\rho_{\mathrm{het}}$ contrôle :
 
 * le nombre de sites hétérozygotes ;
 * la densité du graphe ;
 * le nombre moyen de votes par arête ;
 * donc indirectement la distribution des poids.
 
-Mais conditionnellement aux sites hétérozygotes observés $S_{ij}$, le paramètre $\rho_{\rm het}$ se simplifie dans le rapport de vraisemblance. Ce n’est pas une erreur : c’est exactement ce que l’on veut dans le mode VCF connu.
+Mais conditionnellement aux sites hétérozygotes observés $S_{ij}$, le paramètre $\rho_{\mathrm{het}}$ se simplifie dans le rapport de vraisemblance. Ce n’est pas une erreur : c’est exactement ce que l’on veut dans le mode VCF connu.
 
 ---
 
@@ -634,7 +634,7 @@ Si $z$ est vraiment hétérozygote, le vote est informatif comme précédemment.
 
 Si $z$ n’est pas hétérozygote, le vote ne porte pas d’information sur $\Sigma_i\Sigma_j$.
 
-On note $R_{ijz}(v$) la probabilité d’observer le vote $v\in\{-1,+1\}$ lorsque le site n’est pas hétérozygote. Dans le modèle symétrique simple :
+On note $R_{ijz}(v)$ la probabilité d’observer le vote $(v\in\{-1,+1\})$ lorsque le site n’est pas hétérozygote. Dans le modèle symétrique simple :
 
 $$
 R_{ijz}(+1)=q_{ijz},
@@ -647,7 +647,7 @@ Alors
 $$
 \mathbb P(V_{ijz}=v\mid \Sigma_i\Sigma_j=+1) =
 \gamma_z
-\mathbb P_{\rm het}(v\mid +1)
+\mathbb P_{\mathrm{het}}(v\mid +1)
 +
 (1-\gamma_z)R_{ijz}(v),
 $$
@@ -657,7 +657,7 @@ et
 $$
 \mathbb P(V_{ijz}=v\mid \Sigma_i\Sigma_j=-1) =
 \gamma_z
-\mathbb P_{\rm het}(v\mid -1)
+\mathbb P_{\mathrm{het}}(v\mid -1)
 +
 (1-\gamma_z)R_{ijz}(v).
 $$
@@ -696,7 +696,7 @@ On ne conditionne plus sur les sites hétérozygotes connus. On intègre l’inc
 Pour une position $z\in O_{ij}$, on suppose
 
 $$
-\mathbb P(z\text{ hétérozygote})=\rho_{\rm het}.
+\mathbb P(z\text{ hétérozygote})=\rho_{\mathrm{het}}.
 $$
 
 Si les lectures proviennent du même haplotype, alors le vrai vote est $+1$, que le site soit hétérozygote ou non.
@@ -713,23 +713,23 @@ $$
 
 Si les lectures proviennent d’haplotypes différents :
 
-* avec probabilité $1-\rho_{\rm het}$, le site n’est pas hétérozygote et le vrai vote est $+1$ ;
-* avec probabilité $\rho_{\rm het}$, le site est hétérozygote et le vrai vote est (-1).
+* avec probabilité $1-\rho_{\mathrm{het}}$, le site n’est pas hétérozygote et le vrai vote est $+1$ ;
+* avec probabilité $\rho_{\mathrm{het}}$, le site est hétérozygote et le vrai vote est (-1).
 
 Ainsi,
 
 $$
 \mathbb P(V_{ijz}=+1\mid \Sigma_i\Sigma_j=-1) =
-(1-\rho_{\rm het})q_{ijz}
+(1-\rho_{\mathrm{het}})q_{ijz}
 +
-\rho_{\rm het}(1-q_{ijz}),
+\rho_{\mathrm{het}}(1-q_{ijz}),
 $$
 
 $$
 \mathbb P(V_{ijz}=-1\mid \Sigma_i\Sigma_j=-1) =
-(1-\rho_{\rm het})(1-q_{ijz})
+(1-\rho_{\mathrm{het}})(1-q_{ijz})
 +
-\rho_{\rm het}q_{ijz}.
+\rho_{\mathrm{het}}q_{ijz}.
 $$
 
 Le poids est alors
@@ -745,7 +745,7 @@ W_{ij} =
 }.
 $$
 
-Ce mode donne un rôle explicite à $\rho_{\rm het}$ dans chaque terme du poids.
+Ce mode donne un rôle explicite à $\rho_{\mathrm{het}}$ dans chaque terme du poids.
 
 Il est toutefois déconseillé comme mode principal, car les sites homozygotes dominent très vite les reads longs. Le mode recommandé pour l’inférence d’haplotypes reste le mode VCF connu ou VCF simulé.
 
@@ -792,15 +792,15 @@ higher_order:
 
 Règles possibles :
 
-1. `edge_clique` : les trois arêtes ((i,j),(j,k),(i,k)) existent.
+1. `edge_clique` : les trois arêtes ($(i,j)$, $(j,k)$, $(i,k)$) existent.
 2. `shared_variant` : les trois lectures partagent au moins un variant hétérozygote.
 3. `shared_region` : les trois lectures ont une intersection géométrique commune.
 
-Pour un triangle $t={i,j,k}$, on définit
+Pour un triangle $(t={i,j,k})$, on définit
 
 $$
 F_{ijk} =
-\operatorname{sign}(W_{ij}W_{jk}W_{ik}).
+\text{sign}(W_{ij}W_{jk}W_{ik}).
 $$
 
 Le triangle est frustré si
@@ -846,7 +846,7 @@ Colonnes recommandées :
 * `concordances` : $c_{ij}$ ;
 * `differences` : $d_{ij}$ ;
 * `weight` : $W_{ij}$ ;
-* `sign` : $\operatorname{sign}(W_{ij}$).
+* `sign` : $\text{sign}(W_{ij})$.
 
 ### `triangles.tsv`
 
@@ -1066,7 +1066,7 @@ graph:
   edge_rule: likelihood_ratio
 ```
 
-Avec $\rho_{\rm het}=0.00075$, une lecture de 18 kb couvre en moyenne
+Avec $\rho_{\mathrm{het}}=0.00075$, une lecture de 18 kb couvre en moyenne
 
 $$
 18000\times 0.00075 = 13.5
