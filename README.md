@@ -16,27 +16,27 @@ Le benchmark reste volontairement simple : il isole le problème statistique d�
 
 On considère une paire de chromosomes homologues, discrétisés sur
 
-[
-{0,\ldots,L-1}.
-]
+$$
+\{0,\ldots,L-1\}.
+$$
 
-Chaque lecture (i) est définie par :
+Chaque lecture $i$ est définie par :
 
-* une position centrale (x_i) ;
-* une longueur fixée (2\ell+1) dans le modèle de base ;
+* une position centrale $x_i$ ;
+* une longueur fixée $2\ell+1$ dans le modèle de base ;
 * un haplotype d’origine caché
 
-[
-\Sigma_i\in{-1,+1}.
-]
+$$
+\Sigma_i\in\{-1,+1\}.
+$$
 
 La lecture couvre l’intervalle
 
-[
-I_i=[x_i-\ell,x_i+\ell]\cap {0,\ldots,L-1}.
-]
+$$
+I_i=[x_i-\ell,x_i+\ell]\cap \{0,\ldots,L-1\}.
+$$
 
-L’objectif est de reconstruire les (\Sigma_i) à partir des lectures bruitées.
+L’objectif est de reconstruire les $\Sigma_i$ à partir des lectures bruitées.
 
 ---
 
@@ -146,38 +146,32 @@ output:
 
 Le nombre de lectures ne doit pas être fixé à la main par défaut. Il est calculé à partir de la couverture cible.
 
-Si les lectures ont longueur moyenne (\mathbb E[R]), alors
+Si les lectures ont longueur moyenne $\mathbb E[R]$, alors
 
-[
-n_{\rm reads}
-=============
-
+$$
+n_{\rm reads} =
 \left\lceil
 \frac{cL}{\mathbb E[R]}
 \right\rceil.
-]
+$$
 
-Dans le cas paired-end, si une molécule produit deux lectures de longueur (R), alors
+Dans le cas paired-end, si une molécule produit deux lectures de longueur $R$, alors
 
-[
-n_{\rm pairs}
-=============
-
+$$
+n_{\rm pairs} =
 \left\lceil
 \frac{cL}{2R}
 \right\rceil.
-]
+$$
 
-Dans le modèle à longueur fixée (R=2\ell+1),
+Dans le modèle à longueur fixée $R=2\ell+1$,
 
-[
-n_{\rm reads}
-=============
-
+$$
+n_{\rm reads} =
 \left\lceil
 \frac{cL}{2\ell+1}
 \right\rceil.
-]
+$$
 
 ---
 
@@ -204,35 +198,35 @@ Le chromosome 22 est le meilleur choix pour les tests initiaux : il est suffisam
 
 Le benchmark utilise par défaut uniquement des SNPs bialléliques hétérozygotes.
 
-Chaque position (z\in{0,\ldots,L-1}) est hétérozygote avec probabilité
+Chaque position $z\in{0,\ldots,L-1}$ est hétérozygote avec probabilité
 
-[
+$$
 \rho_{\rm het}.
-]
+$$
 
 Dans le modèle Bernoulli homogène :
 
-[
+$$
 H_z\sim \operatorname{Bernoulli}(\rho_{\rm het}).
-]
+$$
 
 L’ensemble des sites hétérozygotes est
 
-[
+$$
 \mathcal V={z:\ H_z=1}.
-]
+$$
 
 Le nombre de variants hétérozygotes vérifie
 
-[
+$$
 |\mathcal V|\sim \operatorname{Bin}(L,\rho_{\rm het}),
-]
+$$
 
 et donc
 
-[
+$$
 \mathbb E[|\mathcal V|]=L\rho_{\rm het}.
-]
+$$
 
 ### Densités recommandées
 
@@ -253,21 +247,21 @@ variant_presets:
 
 Interprétation approximative :
 
-| Preset          | Densité (\rho_{\rm het}) | Distance moyenne |
+| Preset          | Densité $\rho_{\rm het}$ | Distance moyenne |
 | --------------- | -----------------------: | ---------------: |
-| `human_sparse`  |         (5\cdot 10^{-4}) | 1 site / 2000 bp |
-| `human_default` |       (7.5\cdot 10^{-4}) | 1 site / 1333 bp |
-| `human_high`    |                (10^{-3}) | 1 site / 1000 bp |
-| `toy_dense`     |         (2\cdot 10^{-3}) |  1 site / 500 bp |
+| `human_sparse`  |         $5\cdot 10^{-4}$ | 1 site / 2000 bp |
+| `human_default` |       $7.5\cdot 10^{-4}$ | 1 site / 1333 bp |
+| `human_high`    |                $10^{-3}$ | 1 site / 1000 bp |
+| `toy_dense`     |         $2\cdot 10^{-3}$ |  1 site / 500 bp |
 
-Pour chr22, avec (L=50,818,468), cela donne en moyenne :
+Pour chr22, avec $L=50,818,468$, cela donne en moyenne :
 
 | Preset          | Variants attendus |
 | --------------- | ----------------: |
-| `human_sparse`  |  (\approx 25,409) |
-| `human_default` |  (\approx 38,114) |
-| `human_high`    |  (\approx 50,818) |
-| `toy_dense`     | (\approx 101,637) |
+| `human_sparse`  |  $\approx 25,409$ |
+| `human_default` |  $\approx 38,114$ |
+| `human_high`    |  $\approx 50,818$ |
+| `toy_dense`     | $\approx 101,637$ |
 
 Le preset `toy_dense` est utile pour les petites instances et les tests algorithmiques, mais il est trop informatif pour un modèle humain réaliste.
 
@@ -275,60 +269,58 @@ Le preset `toy_dense` est utile pour les petites instances et les tests algorith
 
 ## 6. Génération des deux haplotypes
 
-À chaque site hétérozygote (z\in\mathcal V), les deux haplotypes portent deux allèles différents.
+À chaque site hétérozygote $z\in\mathcal V$, les deux haplotypes portent deux allèles différents.
 
 On encode l’orientation du site par
 
-[
-A_z\in{-1,+1}.
-]
+$$
+A_z\in\{-1,+1\}.
+$$
 
-Pour une lecture issue de l’haplotype (\Sigma_i), l’allèle vrai au site (z) est
+Pour une lecture issue de l’haplotype $\Sigma_i$, l’allèle vrai au site $z$ est
 
-[
+$$
 X_{iz}^{\rm true}=\Sigma_i A_z.
-]
+$$
 
-Ainsi, pour deux lectures (i,j), au même site hétérozygote (z), on a
+Ainsi, pour deux lectures (i,j), au même site hétérozygote $z$, on a
 
-[
-X_{iz}^{\rm true}X_{jz}^{\rm true}
-==================================
-
+$$
+X_{iz}^{\rm true}X_{jz}^{\rm true} =
 \Sigma_i\Sigma_j.
-]
+$$
 
-L’orientation (A_z) disparaît donc dans les comparaisons entre lectures.
+L’orientation $A_z$ disparaît donc dans les comparaisons entre lectures.
 
 ---
 
 ## 7. Génération des lectures
 
-Dans le modèle de base, chaque lecture a une position centrale (x_i) tirée uniformément :
+Dans le modèle de base, chaque lecture a une position centrale $x_i$ tirée uniformément :
 
-[
-x_i\sim \operatorname{Unif}{0,\ldots,L-1}.
-]
+$$
+x_i\sim \operatorname{Unif}\{0,\ldots,L-1\}.
+$$
 
 La lecture couvre
 
-[
-I_i=[x_i-\ell,x_i+\ell]\cap {0,\ldots,L-1}.
-]
+$$
+I_i=[x_i-\ell,x_i+\ell]\cap \{0,\ldots,L-1\}.
+$$
 
 L’haplotype d’origine est tiré selon
 
-[
+$$
 \mathbb P(\Sigma_i=+1)=\pi,
 \qquad
 \mathbb P(\Sigma_i=-1)=1-\pi.
-]
+$$
 
 Par défaut :
 
-[
+$$
 \pi=\frac12.
-]
+$$
 
 Configuration minimale :
 
@@ -344,38 +336,36 @@ reads:
 
 ## 8. Modèle d’observation bruitée
 
-Pour une lecture (i) couvrant un site hétérozygote (z), l’allèle observé est
+Pour une lecture $i$ couvrant un site hétérozygote $z$, l’allèle observé est
 
-[
-Y_{iz}
-======
-
-# X_{iz}^{\rm true}\xi_{iz}
+$$
+Y_{iz} =
+= X_{iz}^{\rm true}\xi_{iz}
 
 \Sigma_i A_z\xi_{iz},
-]
+$$
 
 où
 
-[
+$$
 \xi_{iz}=
 \begin{cases}
 +1 & \text{avec probabilité }1-\varepsilon_{iz},\
 -1 & \text{avec probabilité }\varepsilon_{iz}.
 \end{cases}
-]
+$$
 
 Dans le modèle homogène :
 
-[
+$$
 \varepsilon_{iz}=\varepsilon.
-]
+$$
 
 Si les qualités Phred sont simulées, alors
 
-[
+$$
 \varepsilon_{iz}=10^{-Q_{iz}/10}.
-]
+$$
 
 Les indels peuvent être simulés dans les fichiers biologiques. Pour la construction du graphe, ils sont convertis en :
 
@@ -398,133 +388,119 @@ noise:
 
 Pour deux lectures (i,j), on définit leur région d’intersection :
 
-[
+$$
 O_{ij}=I_i\cap I_j.
-]
+$$
 
 Sa longueur est
 
-[
+$$
 r_{ij}=|O_{ij}|.
-]
+$$
 
 Dans le modèle à longueur fixée sans effet de bord, si
 
-[
+$$
 \Delta_{ij}=|x_i-x_j|,
-]
+$$
 
 alors
 
-[
-r_{ij}
-======
-
+$$
+r_{ij} =
 \max(0,2\ell+1-\Delta_{ij}).
-]
+$$
 
 Les sites hétérozygotes partagés par les deux lectures sont
 
-[
-S_{ij}
-======
-
+$$
+S_{ij} =
 \mathcal V\cap O_{ij}.
-]
+$$
 
 Le nombre de sites hétérozygotes partagés est
 
-[
+$$
 m_{ij}=|S_{ij}|.
-]
+$$
 
-Conditionnellement à (r_{ij}), dans le modèle Bernoulli homogène,
+Conditionnellement à $r_{ij}$, dans le modèle Bernoulli homogène,
 
-[
+$$
 m_{ij}\sim \operatorname{Bin}(r_{ij},\rho_{\rm het}).
-]
+$$
 
 Donc
 
-[
-\mathbb E[m_{ij}\mid r_{ij}]
-============================
-
+$$
+\mathbb E[m_{ij}\mid r_{ij}] =
 \rho_{\rm het}r_{ij}.
-]
+$$
 
 Une arête est créée si
 
-[
+$$
 m_{ij}\ge m_{\min}.
-]
+$$
 
-La probabilité qu’une paire de lectures soit informative, conditionnellement à (r_{ij}), est
+La probabilité qu’une paire de lectures soit informative, conditionnellement à $r_{ij}$, est
 
-[
-\mathbb P(m_{ij}\ge m_{\min}\mid r_{ij})
-========================================
-
+$$
+\mathbb P(m_{ij}\ge m_{\min}\mid r_{ij}) =
 \sum_{h=m_{\min}}^{r_{ij}}
 \binom{r_{ij}}{h}
 \rho_{\rm het}^{h}(1-\rho_{\rm het})^{r_{ij}-h}.
-]
+$$
 
-Pour (r_{ij}\rho_{\rm het}) petit, l’approximation de Poisson donne
+Pour $r_{ij}\rho_{\rm het}$ petit, l’approximation de Poisson donne
 
-[
+$$
 m_{ij}\approx \operatorname{Poisson}(\rho_{\rm het}r_{ij}).
-]
+$$
 
 ---
 
 ## 10. Concordances et différences observées
 
-Pour chaque site partagé (z\in S_{ij}), on calcule le vote
+Pour chaque site partagé $z\in S_{ij}$, on calcule le vote
 
-[
+$$
 V_{ijz}=Y_{iz}Y_{jz}.
-]
+$$
 
 Comme
 
-[
-Y_{iz}Y_{jz}
-============
-
+$$
+Y_{iz}Y_{jz} =
 \Sigma_i\Sigma_j\xi_{iz}\xi_{jz},
-]
+$$
 
 on a, en absence d’erreur,
 
-[
+$$
 V_{ijz}=\Sigma_i\Sigma_j.
-]
+$$
 
 On définit :
 
-[
-c_{ij}
-======
+$$
+c_{ij} =
+= {z\in S_{ij}: V_{ijz}=+1},
+$$
 
-#{z\in S_{ij}: V_{ijz}=+1},
-]
-
-[
-d_{ij}
-======
-
-#{z\in S_{ij}: V_{ijz}=-1}.
-]
+$$
+d_{ij} =
+= {z\in S_{ij}: V_{ijz}=-1}.
+$$
 
 Ainsi,
 
-[
+$$
 m_{ij}=c_{ij}+d_{ij}.
-]
+$$
 
-* (c_{ij}) est le nombre de concordances observées.
-* (d_{ij}) est le nombre de différences observées.
+* $c_{ij}$ est le nombre de concordances observées.
+* $d_{ij}$ est le nombre de différences observées.
 
 ---
 
@@ -534,182 +510,162 @@ Ce mode est recommandé.
 
 On suppose que les sites hétérozygotes utilisés dans le graphe sont connus via `variants.vcf`. Le poids est alors calculé conditionnellement à ces sites.
 
-Pour un site partagé (z), la probabilité que le vote soit correct est
+Pour un site partagé $z$, la probabilité que le vote soit correct est
 
-[
-q_{ijz}
-=======
-
-# \mathbb P(V_{ijz}=\Sigma_i\Sigma_j)
+$$
+q_{ijz} =
+= \mathbb P(V_{ijz}=\Sigma_i\Sigma_j)
 
 (1-\varepsilon_{iz})(1-\varepsilon_{jz})
 +
 \varepsilon_{iz}\varepsilon_{jz}.
-]
+$$
 
 La probabilité que le vote soit inversé est
 
-[
-1-q_{ijz}
-=========
-
+$$
+1-q_{ijz} =
 (1-\varepsilon_{iz})\varepsilon_{jz}
 +
 \varepsilon_{iz}(1-\varepsilon_{jz}).
-]
+$$
 
-Le poids signé de l’arête (e={i,j}) est le log-rapport de vraisemblance :
+Le poids signé de l’arête $e={i,j}$ est le log-rapport de vraisemblance :
 
-[
-W_{ij}
-======
-
+$$
+W_{ij} =
 \log
 \frac{
 \mathbb P({V_{ijz}}*{z\in S*{ij}}\mid \Sigma_i\Sigma_j=+1)
 }{
 \mathbb P({V_{ijz}}*{z\in S*{ij}}\mid \Sigma_i\Sigma_j=-1)
 }.
-]
+$$
 
 Comme les sites partagés sont conditionnellement indépendants,
 
-[
-W_{ij}
-======
-
+$$
+W_{ij} =
 \sum_{z\in S_{ij}}
 V_{ijz}
 \log
 \frac{q_{ijz}}{1-q_{ijz}}.
-]
+$$
 
-Dans le cas homogène (\varepsilon_{iz}=\varepsilon), on a
+Dans le cas homogène $\varepsilon_{iz}=\varepsilon$, on a
 
-[
+$$
 q=(1-\varepsilon)^2+\varepsilon^2,
-]
+$$
 
 et donc
 
-[
-W_{ij}
-======
-
+$$
+W_{ij} =
 (c_{ij}-d_{ij})
 \log
 \frac{q}{1-q}.
-]
+$$
 
 Puisque
 
-[
+$$
 m_{ij}=c_{ij}+d_{ij},
-]
+$$
 
 on peut aussi écrire
 
-[
-W_{ij}
-======
-
+$$
+W_{ij} =
 (2c_{ij}-m_{ij})
 \log
 \frac{q}{1-q}.
-]
+$$
 
 L’arête est attractive si
 
-[
+$$
 W_{ij}>0,
-]
+$$
 
 répulsive si
 
-[
+$$
 W_{ij}<0.
-]
+$$
 
 Le signe observé est
 
-[
+$$
 \widehat S_{ij}=\operatorname{sign}(W_{ij}).
-]
+$$
 
 Le poids absolu est
 
-[
+$$
 |W_{ij}|.
-]
+$$
 
-### Remarque importante sur (\rho_{\rm het})
+### Remarque importante sur $\rho_{\rm het}$
 
-Dans ce mode, (\rho_{\rm het}) contrôle :
+Dans ce mode, $\rho_{\rm het}$ contrôle :
 
 * le nombre de sites hétérozygotes ;
 * la densité du graphe ;
 * le nombre moyen de votes par arête ;
 * donc indirectement la distribution des poids.
 
-Mais conditionnellement aux sites hétérozygotes observés (S_{ij}), le paramètre (\rho_{\rm het}) se simplifie dans le rapport de vraisemblance. Ce n’est pas une erreur : c’est exactement ce que l’on veut dans le mode VCF connu.
+Mais conditionnellement aux sites hétérozygotes observés $S_{ij}$, le paramètre $\rho_{\rm het}$ se simplifie dans le rapport de vraisemblance. Ce n’est pas une erreur : c’est exactement ce que l’on veut dans le mode VCF connu.
 
 ---
 
 ## 12. Poids avec confiance de génotypage
 
-Si chaque site hétérozygote (z) possède une probabilité de confiance
+Si chaque site hétérozygote $z$ possède une probabilité de confiance
 
-[
-\gamma_z
-========
-
+$$
+\gamma_z =
 \mathbb P(z\text{ vraiment hétérozygote}),
-]
+$$
 
 on peut utiliser le modèle de mélange suivant.
 
-Si (z) est vraiment hétérozygote, le vote est informatif comme précédemment.
+Si $z$ est vraiment hétérozygote, le vote est informatif comme précédemment.
 
-Si (z) n’est pas hétérozygote, le vote ne porte pas d’information sur (\Sigma_i\Sigma_j).
+Si $z$ n’est pas hétérozygote, le vote ne porte pas d’information sur $\Sigma_i\Sigma_j$.
 
-On note (R_{ijz}(v)) la probabilité d’observer le vote (v\in{-1,+1}) lorsque le site n’est pas hétérozygote. Dans le modèle symétrique simple :
+On note $R_{ijz}(v$) la probabilité d’observer le vote $v\in\{-1,+1\}$ lorsque le site n’est pas hétérozygote. Dans le modèle symétrique simple :
 
-[
+$$
 R_{ijz}(+1)=q_{ijz},
 \qquad
 R_{ijz}(-1)=1-q_{ijz}.
-]
+$$
 
 Alors
 
-[
-\mathbb P(V_{ijz}=v\mid \Sigma_i\Sigma_j=+1)
-============================================
-
+$$
+\mathbb P(V_{ijz}=v\mid \Sigma_i\Sigma_j=+1) =
 \gamma_z
 \mathbb P_{\rm het}(v\mid +1)
 +
 (1-\gamma_z)R_{ijz}(v),
-]
+$$
 
 et
 
-[
-\mathbb P(V_{ijz}=v\mid \Sigma_i\Sigma_j=-1)
-============================================
-
+$$
+\mathbb P(V_{ijz}=v\mid \Sigma_i\Sigma_j=-1) =
 \gamma_z
 \mathbb P_{\rm het}(v\mid -1)
 +
 (1-\gamma_z)R_{ijz}(v).
-]
+$$
 
 Le poids devient
 
-[
-W_{ij}
-======
-
+$$
+W_{ij} =
 \sum_{z\in S_{ij}}
 \log
 \frac{
@@ -717,7 +673,7 @@ W_{ij}
 }{
 \mathbb P(V_{ijz}\mid \Sigma_i\Sigma_j=-1)
 }.
-]
+$$
 
 Par défaut :
 
@@ -727,7 +683,7 @@ variants:
   gamma: 1.0
 ```
 
-Le mode `hard` correspond à (\gamma_z=1) pour tous les sites exportés dans le VCF.
+Le mode `hard` correspond à $\gamma_z=1$ pour tous les sites exportés dans le VCF.
 
 ---
 
@@ -737,55 +693,49 @@ Ce mode est optionnel et moins recommandé.
 
 On ne conditionne plus sur les sites hétérozygotes connus. On intègre l’incertitude sur l’hétérozygotie à chaque position de l’overlap.
 
-Pour une position (z\in O_{ij}), on suppose
+Pour une position $z\in O_{ij}$, on suppose
 
-[
+$$
 \mathbb P(z\text{ hétérozygote})=\rho_{\rm het}.
-]
+$$
 
-Si les lectures proviennent du même haplotype, alors le vrai vote est (+1), que le site soit hétérozygote ou non.
+Si les lectures proviennent du même haplotype, alors le vrai vote est $+1$, que le site soit hétérozygote ou non.
 
 Donc
 
-[
+$$
 \mathbb P(V_{ijz}=+1\mid \Sigma_i\Sigma_j=+1)=q_{ijz},
-]
+$$
 
-[
+$$
 \mathbb P(V_{ijz}=-1\mid \Sigma_i\Sigma_j=+1)=1-q_{ijz}.
-]
+$$
 
 Si les lectures proviennent d’haplotypes différents :
 
-* avec probabilité (1-\rho_{\rm het}), le site n’est pas hétérozygote et le vrai vote est (+1) ;
-* avec probabilité (\rho_{\rm het}), le site est hétérozygote et le vrai vote est (-1).
+* avec probabilité $1-\rho_{\rm het}$, le site n’est pas hétérozygote et le vrai vote est $+1$ ;
+* avec probabilité $\rho_{\rm het}$, le site est hétérozygote et le vrai vote est (-1).
 
 Ainsi,
 
-[
-\mathbb P(V_{ijz}=+1\mid \Sigma_i\Sigma_j=-1)
-=============================================
-
+$$
+\mathbb P(V_{ijz}=+1\mid \Sigma_i\Sigma_j=-1) =
 (1-\rho_{\rm het})q_{ijz}
 +
 \rho_{\rm het}(1-q_{ijz}),
-]
+$$
 
-[
-\mathbb P(V_{ijz}=-1\mid \Sigma_i\Sigma_j=-1)
-=============================================
-
+$$
+\mathbb P(V_{ijz}=-1\mid \Sigma_i\Sigma_j=-1) =
 (1-\rho_{\rm het})(1-q_{ijz})
 +
 \rho_{\rm het}q_{ijz}.
-]
+$$
 
 Le poids est alors
 
-[
-W_{ij}
-======
-
+$$
+W_{ij} =
 \sum_{z\in O_{ij}}
 \log
 \frac{
@@ -793,9 +743,9 @@ W_{ij}
 }{
 \mathbb P(V_{ijz}\mid \Sigma_i\Sigma_j=-1)
 }.
-]
+$$
 
-Ce mode donne un rôle explicite à (\rho_{\rm het}) dans chaque terme du poids.
+Ce mode donne un rôle explicite à $\rho_{\rm het}$ dans chaque terme du poids.
 
 Il est toutefois déconseillé comme mode principal, car les sites homozygotes dominent très vite les reads longs. Le mode recommandé pour l’inférence d’haplotypes reste le mode VCF connu ou VCF simulé.
 
@@ -805,28 +755,26 @@ Il est toutefois déconseillé comme mode principal, car les sites homozygotes d
 
 Le graphe signé pondéré définit une postérieure de type Ising signé :
 
-[
+$$
 \mu(\sigma\mid W)
 \propto
 \exp
 \left(
-\sum_{{i,j}\in E}
+\sum_{\{i,j\}\in E}
 W_{ij}\sigma_i\sigma_j
 \right).
-]
+$$
 
 Équivalemment, l’énergie est
 
-[
-U(\sigma)
-=========
-
-\sum_{{i,j}:W_{ij}>0}
+$$
+U(\sigma) =
+\sum_{\{i,j\}:W_{ij}>0}
 |W_{ij}|\mathbf 1_{\sigma_i\neq\sigma_j}
 +
-\sum_{{i,j}:W_{ij}<0}
+\sum_{\{i,j\}:W_{ij}<0}
 |W_{ij}|\mathbf 1_{\sigma_i=\sigma_j}.
-]
+$$
 
 Cette forme est compatible avec les dynamiques de type Swendsen-Wang signé.
 
@@ -848,20 +796,18 @@ Règles possibles :
 2. `shared_variant` : les trois lectures partagent au moins un variant hétérozygote.
 3. `shared_region` : les trois lectures ont une intersection géométrique commune.
 
-Pour un triangle (t={i,j,k}), on définit
+Pour un triangle $t={i,j,k}$, on définit
 
-[
-F_{ijk}
-=======
-
+$$
+F_{ijk} =
 \operatorname{sign}(W_{ij}W_{jk}W_{ik}).
-]
+$$
 
 Le triangle est frustré si
 
-[
+$$
 F_{ijk}=-1.
-]
+$$
 
 Un graphe sans bruit issu de deux haplotypes est équilibré : le produit des signes sur tout cycle est positif. Les triangles frustrés mesurent donc directement les contradictions induites par le bruit.
 
@@ -895,12 +841,12 @@ source  target  overlap_length  shared_het_sites  concordances  differences  wei
 Colonnes recommandées :
 
 * `source`, `target` : identifiants des lectures ;
-* `overlap_length` : longueur de l’intersection (r_{ij}) ;
-* `shared_het_sites` : (m_{ij}) ;
-* `concordances` : (c_{ij}) ;
-* `differences` : (d_{ij}) ;
-* `weight` : (W_{ij}) ;
-* `sign` : (\operatorname{sign}(W_{ij})).
+* `overlap_length` : longueur de l’intersection $r_{ij}$ ;
+* `shared_het_sites` : $m_{ij}$ ;
+* `concordances` : $c_{ij}$ ;
+* `differences` : $d_{ij}$ ;
+* `weight` : $W_{ij}$ ;
+* `sign` : $\operatorname{sign}(W_{ij}$).
 
 ### `triangles.tsv`
 
@@ -941,7 +887,7 @@ i   j   k   rule          frustration  weight_ij  weight_jk  weight_ik
 
 ### FASTA
 
-`reference.fa` contient une pseudo-référence, par exemple (H^+).
+`reference.fa` contient une pseudo-référence, par exemple $H^+$.
 
 ### FASTQ
 
@@ -1067,19 +1013,17 @@ graph:
 
 Pour une paire correcte, les deux extrémités proviennent du même haplotype. Si elles sont modélisées comme deux nœuds distincts, on ajoute une arête ferromagnétique interne de poids
 
-[
-J_{\rm pair}
-============
-
+$$
+J_{\rm pair} =
 \log
 \frac{1-\delta_{\rm pair}}{\delta_{\rm pair}}.
-]
+$$
 
 Par défaut :
 
-[
+$$
 \delta_{\rm pair}=0.001.
-]
+$$
 
 ---
 
@@ -1122,11 +1066,11 @@ graph:
   edge_rule: likelihood_ratio
 ```
 
-Avec (\rho_{\rm het}=0.00075), une lecture de 18 kb couvre en moyenne
+Avec $\rho_{\rm het}=0.00075$, une lecture de 18 kb couvre en moyenne
 
-[
+$$
 18000\times 0.00075 = 13.5
-]
+$$
 
 sites hétérozygotes.
 
@@ -1346,9 +1290,9 @@ graph:
 
 On conserve seulement les arêtes telles que
 
-[
+$$
 m_{ij}\ge m_{\min}.
-]
+$$
 
 ### 19.3 Filtrage par poids
 
@@ -1360,9 +1304,9 @@ graph:
 
 On conserve seulement les arêtes telles que
 
-[
+$$
 |W_{ij}|\ge w_{\min}.
-]
+$$
 
 ### 19.4 Graphe local
 
