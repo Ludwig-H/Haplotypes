@@ -1014,15 +1014,15 @@ graph:
 Pour une paire correcte, les deux extrémités proviennent du même haplotype. Si elles sont modélisées comme deux nœuds distincts, on ajoute une arête ferromagnétique interne de poids
 
 $$
-J_{\rm pair} =
+J_{\mathrm{pair}} =
 \log
-\frac{1-\delta_{\rm pair}}{\delta_{\rm pair}}.
+\frac{1-\delta_{\mathrm{pair}}}{\delta_{\mathrm{pair}}}.
 $$
 
 Par défaut :
 
 $$
-\delta_{\rm pair}=0.001.
+\delta_{\mathrm{pair}}=0.001.
 $$
 
 ---
