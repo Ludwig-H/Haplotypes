@@ -44,7 +44,7 @@ $$
 Soit $A$ un ensemble de sommets que l'on flippe (renversement de spins) :
 
 $$
-\sigma_i'= \begin{cases} -\sigma_i, & i\in A,\\ \sigma_i, & i\notin A \end{cases}
+\sigma_i'= \begin{cases} -\sigma_i, & i \in A \\\\ \sigma_i, & i \notin A \end{cases}
 $$
 
 Seules les arêtes coupées par $A$ changent de satisfaction. On note la coupe induite par $A$ :
