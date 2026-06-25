@@ -3,10 +3,16 @@
 ## 1. Objectif
 
 On considère un graphe signé pondéré dont les sommets sont des reads ordonnés le long d'un chromosome :
-$$0, 1, \dots, R-1$$
+
+$$
+0, 1, \dots, R-1
+$$
 
 Chaque read porte un spin caché :
-$$\sigma_i \in \{-1, +1\}$$
+
+$$
+\sigma_i \in \{-1, +1\}
+$$
 
 Les poids d'arêtes encodent des contraintes ferromagnétiques ou antiferromagnétiques :
 *   Si $W_{ij} > 0$, l'arête préfère $\sigma_i = \sigma_j$ ;
@@ -20,23 +26,38 @@ L'objectif est de construire une dynamique MCMC de type **Glauber / Heat-Bath** 
 ## 2. Mesure cible
 
 On écrit l'énergie sous la forme "arêtes non satisfaites" :
-$$U(\sigma) = \sum_{\{i,j\}: W_{ij}>0} |W_{ij}| \mathbf{1}_{\sigma_i \neq \sigma_j} + \sum_{\{i,j\}: W_{ij}<0} |W_{ij}| \mathbf{1}_{\sigma_i = \sigma_j}$$
+
+$$
+U(\sigma) = \sum_{\{i,j\}: W_{ij}>0} |W_{ij}| \mathbf{1}_{\sigma_i \neq \sigma_j} + \sum_{\{i,j\}: W_{ij}<0} |W_{ij}| \mathbf{1}_{\sigma_i = \sigma_j}
+$$
 
 La postérieure cible est :
-$$\mu(\sigma \mid W) \propto \exp\bigl(-U(\sigma)\bigr)$$
+
+$$
+\mu(\sigma \mid W) \propto \exp\bigl(-U(\sigma)\bigr)
+$$
 
 ---
 
 ## 3. Variation d'énergie
 
 Soit $A$ un ensemble de sommets que l'on flippe (renversement de spins) :
-$$\sigma_i'= \begin{cases} -\sigma_i, & i\in A,\\ \sigma_i, & i\notin A \end{cases}$$
+
+$$
+\sigma_i'= \begin{cases} -\sigma_i, & i\in A,\\ \sigma_i, & i\notin A \end{cases}
+$$
 
 Seules les arêtes coupées par $A$ changent de satisfaction. On note la coupe induite par $A$ :
-$$\delta(A) = \{\{i,j\}\in E: |\{i,j\}\cap A| = 1\}$$
+
+$$
+\delta(A) = \{\{i,j\}\in E: |\{i,j\}\cap A| = 1\}
+$$
 
 La variation d'énergie résultant du flip est alors :
-$$\Delta U(A) = U(\sigma')-U(\sigma) = \sum_{\{i,j\}\in \delta(A)} W_{ij}\sigma_i\sigma_j$$
+
+$$
+\Delta U(A) = U(\sigma')-U(\sigma) = \sum_{\{i,j\}\in \delta(A)} W_{ij}\sigma_i\sigma_j
+$$
 
 Pour évaluer un mouvement, il suffit de sommer les contributions signées $W_{ij}\sigma_i\sigma_j$ des arêtes traversées par la coupe $\delta(A)$ induite par ce mouvement.
 
@@ -45,13 +66,22 @@ Pour évaluer un mouvement, il suffit de sommer les contributions signées $W_{i
 ## 4. Variables duales sur $\mathbb{Z}$
 
 La géométrie sur $\mathbb{Z}$ suggère d'introduire les variables de murs de domaine :
-$$\tau_t = \sigma_t\sigma_{t+1}, \qquad t = 0, \dots, R-2$$
+
+$$
+\tau_t = \sigma_t\sigma_{t+1}, \qquad t = 0, \dots, R-2
+$$
 
 Pour $i < j$, on reconstruit l'interaction de spin par le produit cumulé :
-$$\sigma_i\sigma_j = \prod_{t=i}^{j-1}\tau_t$$
+
+$$
+\sigma_i\sigma_j = \prod_{t=i}^{j-1}\tau_t
+$$
 
 Un flip de préfixe $P_q = \{0, 1, \dots, q\}$ ne modifie qu'un seul mur dans la représentation duale :
-$$\tau_q \mapsto -\tau_q$$
+
+$$
+\tau_q \mapsto -\tau_q
+$$
 
 Ainsi, dans les variables duales, les mouvements de préfixe sont parfaitement locaux. Dans les variables de spins d'origine, ils correspondent à des flips macroscopiques de blocs contigus le long du chromosome, ce qui permet de corriger efficacement les erreurs de phase (*switch errors*).
 
@@ -77,7 +107,10 @@ Aux bords du domaine, les mouvements hors bornes sont rabattus :
 Pour un read $r$ choisi uniformément dans $\{0, \dots, R-1\}$, on évalue les variations d'énergie $\Delta U_m$ pour les 5 mouvements candidats $m \in \{0, \dots, 4\}$.
 
 On souhaite choisir un mouvement $m$ avec une probabilité de type Glauber / Heat-Bath :
-$$p_m = \frac{\exp(-\beta \Delta U_m)}{\sum_{k=0}^4 \exp(-\beta \Delta U_k)}$$
+
+$$
+p_m = \frac{\exp(-\beta \Delta U_m)}{\sum_{k=0}^4 \exp(-\beta \Delta U_k)}
+$$
 
 *Note : Le mouvement nul $m=0$ (correspondant à $\varnothing$) ayant une variation d'énergie nulle $\Delta U_0 = 0$, son poids de Boltzmann au dénominateur vaut toujours $\exp(-\beta \cdot 0) = 1$.*
 
@@ -86,7 +119,10 @@ $$p_m = \frac{\exp(-\beta \Delta U_m)}{\sum_{k=0}^4 \exp(-\beta \Delta U_k)}$$
 Le jeu de mouvements $\mathcal{M} = \{\varnothing, \{r\}, P_{r-1}, P_r, P_{r+1}\}$ n'est pas fermé par composition (par exemple, la composition de $P_{r-1}$ et $P_{r+1}$ n'appartient pas à $\mathcal{M}$). Les voisinages des états de départ et d'arrivée ne sont donc pas symétriques, ce qui brise la balance détaillée si l'on applique le choix Glauber directement.
 
 Pour restaurer rigoureusement la réversibilité de la chaîne par rapport à la distribution cible, on applique un filtre d'acceptation de Metropolis-Hastings. Si un mouvement $m > 0$ est sélectionné (menant à l'état $\sigma'$), on l'accepte avec la probabilité :
-$$\alpha(\sigma \to \sigma') = \min\left(1, \frac{\sum_{k=0}^4 \exp(-\beta \Delta U_k(\sigma))}{\sum_{k=0}^4 \exp(-\beta \Delta U_k(\sigma'))}\right)$$
+
+$$
+\alpha(\sigma \to \sigma') = \min\left(1, \frac{\sum_{k=0}^4 \exp(-\beta \Delta U_k(\sigma))}{\sum_{k=0}^4 \exp(-\beta \Delta U_k(\sigma'))}\right)
+$$
 
 Où $\Delta U_k(\sigma')$ désigne les variations d'énergie des 5 mouvements évalués à partir du nouvel état $\sigma'$. Si le mouvement est rejeté, le système retourne à l'état $\sigma$.
 
@@ -99,12 +135,19 @@ Puisque les reads et les arêtes s'étendent sur de longues distances (long read
 ### 7.1 Principe de l'arbre modulo 2
 
 Nous convertissons les variables de mur $\tau_t \in \{-1, +1\}$ en bits $b_t \in \{0, 1\}$ via le codage :
-$$b_t = \frac{1 - \tau_t}{2} \quad \left(b_t = 0 \iff \tau_t = +1, \quad b_t = 1 \iff \tau_t = -1\right)$$
+
+$$
+b_t = \frac{1 - \tau_t}{2} \quad \left(b_t = 0 \iff \tau_t = +1, \quad b_t = 1 \iff \tau_t = -1\right)
+$$
 
 L'arbre de Fenwick stocke les sommes cumulées de ces bits $b_t$ modulo 2 (c'est-à-dire via l'opérateur XOR $\oplus$). Grâce à cette structure :
 
 1.  **Requête d'arête en $\mathcal{O}(\log R)$** : Le produit de spins pour une arête longue $e=(i,j)$ avec $i < j$ est reconstruit par :
-    $$\sigma_i \sigma_j = \prod_{t=i}^{j-1} \tau_t = (-1)^{\sum_{t=i}^{j-1} b_t \pmod 2} = (-1)^{\text{query}(j-1) \oplus \text{query}(i-1)}$$
+    
+$$
+\sigma_i \sigma_j = \prod_{t=i}^{j-1} \tau_t = (-1)^{\sum_{t=i}^{j-1} b_t \pmod 2} = (-1)^{\text{query}(j-1) \oplus \text{query}(i-1)}
+$$
+
     Où $\text{query}(x)$ renvoie la somme XOR des bits de $0$ à $x$ dans l'arbre.
 2.  **Mise à jour de mur en $\mathcal{O}(\log R)$** : Un flip de préfixe $P_q$ (qui correspond géométriquement à inverser uniquement le mur $\tau_q$) nécessite uniquement de flipper le bit $b_q$ dans l'arbre via une opération `update(q, 1)`.
 
@@ -192,7 +235,11 @@ graph TD
 1.  **Sélection** : Choisir un read $r$ uniformément dans $\{0, \dots, R-1\}$.
 2.  **Calcul des énergies de proposition (état $\sigma$)** :
     Pour chaque mouvement $m \in \{1..4\}$ (qui correspond à une coupe $q_m$) :
-    $$\Delta U_m(\sigma) = \sum_{e \in \text{cross}[q_m]} W_e \cdot (-1)^{\text{query}(e.right-1) \oplus \text{query}(e.left-1)}$$
+    
+$$
+\Delta U_m(\sigma) = \sum_{e \in \text{cross}[q_m]} W_e \cdot (-1)^{\text{query}(e.right-1) \oplus \text{query}(e.left-1)}
+$$
+
     Le mouvement nul $m=0$ a une énergie $\Delta U_0(\sigma) = 0$. La décomposition de singleton $\{r\} = P_{r-1} \triangle P_r$ est évaluée par la somme des deux coupes de préfixes correspondantes.
 3.  **Sélection du mouvement** : Échantillonner $m \in \{0..4\}$ selon les probabilités Glauber $p_m \propto \exp(-\beta \Delta U_m(\sigma))$.
 4.  **Cas d'arrêt rapide** : Si $m = 0$ (mouvement nul), le pas s'arrête immédiatement.
@@ -217,7 +264,10 @@ W[e]     = W_ij
 ```
 
 On pré-calcule et stocke la structure de coupe pour chaque position :
-$$\text{cross}[q] = \{ e \in E : \text{left}[e] \le q < \text{right}[e] \}$$
+
+$$
+\text{cross}[q] = \{ e \in E : \text{left}[e] \le q < \text{right}[e] \}
+$$
 
 Cette structure permet d'accéder instantanément à la liste des arêtes traversées par une coupe $q$. La complexité d'évaluation d'une coupe est de $\mathcal{O}(|\text{cross}[q]| \log R)$.
 
@@ -226,7 +276,10 @@ Cette structure permet d'accéder instantanément à la liste des arêtes traver
 ## 10. Complexité
 
 Sous l'hypothèse d'une congestion de coupe bornée :
-$$\sup_q |\text{cross}[q]| = \mathcal{O}(1)$$
+
+$$
+\sup_q |\text{cross}[q]| = \mathcal{O}(1)
+$$
 
 Le coût d'évaluation des 5 mouvements candidats et de l'acceptation Metropolis-Hastings est en **$\mathcal{O}(\log R)$**. Ce coût logarithmique est extrêmement performant et garantit une excellente scalabilité même en présence de reads très longs couvrant de nombreuses coupes.
 
@@ -259,7 +312,10 @@ C[p] = corr_sum[p] / T
 ```
 
 Les paires affectées par une coupe $q$ sont pré-calculées dans la liste :
-$$\mathcal{P}_{\text{cross}}(q) = \{ p = (i,j) \in \mathcal{P}_k : i \le q < j \}$$
+
+$$
+\mathcal{P}_{\text{cross}}(q) = \{ p = (i,j) \in \mathcal{P}_k : i \le q < j \}
+$$
 
 ---
 
