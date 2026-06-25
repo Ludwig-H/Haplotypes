@@ -1,0 +1,16 @@
+{
+    "preset": "pacbio_hifi",
+    "chromosome": "chr22",
+    "chromosome_length": 5081846,
+    "target_coverage": 30,
+    "empirical_coverage": 29.91,
+    "variant_density": 0.00075,
+    "n_variants": 3835,
+    "n_reads": 8470,
+    "n_edges": 235805,
+    "mean_overlap_length": 9573.21,
+    "mean_shared_variants_per_edge": 7.36,
+    "positive_edges_fraction": 0.5006,
+    "negative_edges_fraction": 0.4994,
+    "mean_abs_weight": 50.7404
+}

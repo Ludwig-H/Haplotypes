@@ -952,7 +952,7 @@ noise:
 graph:
   node_model: read_end       # read_end | molecule
   add_pair_link: true
-  pair_link_error: 0.001
+  pair_link_error: 0.01
   min_shared_variants: 1
 ```
 
@@ -967,7 +967,7 @@ $$
 Par défaut :
 
 $$
-\delta_{\mathrm{pair}}=0.001.
+\delta_{\mathrm{pair}}=0.01.
 $$
 
 ---

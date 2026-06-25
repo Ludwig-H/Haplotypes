@@ -1,0 +1,15 @@
+coverage:
+  compute_n_reads: true
+  target: 30
+graph:
+  edge_rule: likelihood_ratio
+  min_shared_variants: 1
+preset: pacbio_hifi
+reference:
+  L: 508184
+  assembly: GRCh38.p14
+  chromosome: chr22
+seed: 1
+variants:
+  density: 0.00075
+  model: bernoulli

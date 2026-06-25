@@ -1,0 +1,15 @@
+# Simulation Summary
+- **preset**: pacbio_hifi
+- **chromosome**: chr22
+- **chromosome_length**: 508184
+- **target_coverage**: 30
+- **empirical_coverage**: 29.91
+- **variant_density**: 0.00075
+- **n_variants**: 366
+- **n_reads**: 847
+- **n_edges**: 23821
+- **mean_overlap_length**: 9613.73
+- **mean_shared_variants_per_edge**: 6.96
+- **positive_edges_fraction**: 0.5022
+- **negative_edges_fraction**: 0.4978
+- **mean_abs_weight**: 47.9666

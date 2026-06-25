@@ -26,7 +26,7 @@ def generate(config_path, out_dir, seed=None):
         "chr20": 64444167,
         "chr22": 50818468
     }
-    L = chr_lengths.get(chromosome, 50818468)
+    L = ref_config.get("L", chr_lengths.get(chromosome, 50818468))
     
     # Extract variants config
     var_config = config.get("variants", {})
