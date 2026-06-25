@@ -348,10 +348,7 @@ reads:
 Pour une lecture $i$ couvrant un site hétérozygote $z$, l’allèle observé est
 
 $$
-Y_{iz} =
-= X_{iz}^{\mathrm{true}}\xi_{iz}
-
-\Sigma_i A_z\xi_{iz},
+Y_{iz} = X_{iz}^{\mathrm{true}}\xi_{iz} = \Sigma_i A_z\xi_{iz},
 $$
 
 où
@@ -359,8 +356,8 @@ où
 $$
 \xi_{iz}=
 \begin{cases}
-+1 & \text{avec probabilité }1-\varepsilon_{iz},\
--1 & \text{avec probabilité }\varepsilon_{iz}.
++1 & \text{avec probabilité } 1-\varepsilon_{iz} \\
+-1 & \text{avec probabilité } \varepsilon_{iz}
 \end{cases}
 $$
 
