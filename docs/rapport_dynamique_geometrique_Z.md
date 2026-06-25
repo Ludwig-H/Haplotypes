@@ -16,7 +16,7 @@ Les poids d'arêtes encodent des contraintes ferromagnétiques ou antiferromagn�
 - Si $W_{ij} < 0$, l'arête préfère $\sigma_i \neq \sigma_j$ ;
 - L'intensité de la contrainte est $|W_{ij}|$.
 
-L'objectif est de construire une dynamique MCMC adaptée à la géométrie unidimensionnelle, plus globale qu'un échantillonneur Metropolis-Hastings local (single-spin) mais avec un coût de calcul comparable lorsque le graphe est local.
+L'objectif est de construire une dynamique MCMC de type Glauber / Heat-Bath adaptée à la géométrie unidimensionnelle, plus globale qu'un échantillonneur local (single-spin) mais avec un coût de calcul comparable lorsque le graphe est local.
 
 Le mouvement proposé est centré sur un read $r$ choisi uniformément. À partir de ce read, on s'autorise à :
 
@@ -121,55 +121,19 @@ Aux bords du domaine, les mouvements hors bornes sont rabattus de façon explici
 
 Cette convention évite l'apparition de cas particuliers non triviaux et dangereux dans l'implémentation.
 
-## 6. Noyau de transition : Metropolis-Hastings vs Glauber / Heat-Bath
+## 6. Noyau de transition : Glauber / Heat-Bath (Par défaut)
 
-Pour un read $r$ choisi uniformément, on dispose d'un ensemble de mouvements candidats. Deux grandes classes de dynamiques peuvent être envisagées pour effectuer la transition de spin.
+Pour un read $r$ choisi uniformément, on utilise par défaut une dynamique de type Glauber / Heat-Bath. Au lieu de proposer uniformément un mouvement et de le rejeter fréquemment, on échantillonne directement la nouvelle configuration locale selon la distribution de Boltzmann.
 
-### 6.1 Approche A : Metropolis-Hastings uniforme
+### 6.1 Sélection Heat-Bath exacte (Voisinage fermé à 8 états)
 
-C'est la dynamique par défaut. Le mouvement $A$ est proposé uniformément parmi les cinq choix $\\{A_0, \dots, A_4\\}$, puis accepté avec la probabilité de Metropolis-Hastings classique :
+C'est la dynamique par défaut recommandée. On définit un voisinage fermé de $2^3 = 8$ configurations possibles générées par les inversions de n'importe quel sous-ensemble des trois variables de mur de domaine $\\{\tau_{r-1}, \tau_r, \tau_{r+1}\\}$.
 
-$$\alpha_\beta(\sigma, A) = \min\bigl(1, \exp(-\beta\Delta U(A))\bigr)$$
+Puisque cet ensemble de mouvements forme un groupe abélien fermé (isomorphe à $(\mathbb{Z}_2)^3$), le voisinage est symétrique. On effectue alors un échantillonnage de Heat-Bath exact avec un **taux d'acceptation de 100% (sans rejet)**. Le mouvement $m \in \\{0, \dots, 7\\}$ est choisi avec la probabilité :
 
-Cette dynamique est réversible et simple, mais elle présente un taux de rejet important à basse température (grand $\beta$) lorsque les mouvements proposés augmentent fortement l'énergie.
+$$p_m = \frac{\exp(-\beta \Delta U_m)}{\sum_{k=0}^7 \exp(-\beta \Delta U_k)}$$
 
-### 6.2 Approche B : Sélection de Glauber / Heat-Bath sur les 5 mouvements
-
-On souhaite plutôt proposer un mouvement $m \in \\{0, \dots, 4\\}$ avec une probabilité proportionnelle à son poids de Boltzmann (dynamique de type Glauber / Heat-Bath) :
-
-$$p_m = \frac{\exp(-\beta \Delta U_m)}{\sum_{k=0}^4 \exp(-\beta \Delta U_k)}$$
-
-#### Condition de réversibilité et non-fermeture du voisinage
-
-Pour que cette sélection directe (sans rejet) satisfasse la balance détaillée, il est indispensable que le voisinage des états accessibles soit **symétrique (fermé par composition)**. C'est-à-dire que si l'on peut passer de $\sigma$ à $\sigma'$ via l'un des 5 mouvements associés à $r$, le voisinage des 5 états accessibles depuis $\sigma'$ pour ce même $r$ doit être identique à celui de $\sigma$.
-
-Or, le jeu de mouvements proposé :
-$$\mathcal{M} = \\{\varnothing, \\{r\\}, P_{r-1}, P_r, P_{r+1}\\}$$
-n'est **pas fermé**. En termes de variables de mur de domaine $\tau$, ces mouvements correspondent respectivement à inverser les sous-ensembles de murs suivants :
-$$\\{\varnothing\\}, \quad \\{\tau_{r-1}, \tau_r\\}, \quad \\{\tau_{r-1}\\}, \quad \\{\tau_r\\}, \quad \\{\tau_{r+1}\\}$$
-
-Si l'on applique le mouvement $P_{r-1}$ (inversion de $\tau_{r-1}$) pour passer de $\sigma$ à $\sigma'$, et qu'à partir de $\sigma'$ on applique le mouvement $P_{r+1}$ (inversion de $\tau_{r+1}$), l'état final $\sigma' \triangle P_{r+1} = \sigma \triangle P_{r-1} \triangle P_{r+1}$ n'est pas accessible en un seul mouvement depuis $\sigma$ (car l'inversion simultanée de $\\{\tau_{r-1}, \tau_{r+1}\\}$ n'est pas dans $\mathcal{M}$).
-
-Puisque les voisinages ne sont pas identiques, les dénominateurs (fonctions de partition locales) diffèrent :
-$$\sum_{k=0}^4 \exp(-\beta U(\sigma \triangle A_k)) \neq \sum_{k=0}^4 \exp(-\beta U(\sigma' \triangle A_k))$$
-
-Une sélection directe par la probabilité $p_m$ **viole donc la balance détaillée**.
-
-### 6.3 Solutions pour implémenter une dynamique de Glauber exacte
-
-Trois solutions rigoureuses permettent d'introduire cette dynamique préférentielle tout en garantissant la réversibilité.
-
-#### Solution 1 : Sélection de Glauber corrigée par Metropolis-Hastings
-
-On propose le mouvement $m$ selon la distribution de Glauber $p_m$. Pour compenser l'asymétrie des voisinages, on applique un filtre d'acceptation de Metropolis-Hastings. La probabilité d'acceptation devient le ratio des fonctions de partition locales :
-
-$$\alpha(\sigma \to \sigma') = \min\left(1, \frac{\sum_{k=0}^4 \exp(-\beta U(\sigma \triangle A_k))}{\sum_{k=0}^4 \exp(-\beta U(\sigma' \triangle A_k))}\right)$$
-
-#### Solution 2 : Heat-Bath exact sur le voisinage fermé à 8 états (Recommandé)
-
-On définit un voisinage fermé en considérant l'ensemble de toutes les configurations de spins générées par les flips de n'importe quel sous-ensemble des three variables duales affectées $\\{\tau_{r-1}, \tau_r, \tau_{r+1}\\}$. Cela génère un espace de $2^3 = 8$ configurations possibles.
-
-Ces 8 mouvements candidats correspondent aux inversions des sous-ensembles de murs suivants :
+Les 8 mouvements candidats correspondent aux inversions des sous-ensembles de murs suivants :
 1. $\varnothing$ (mouvement nul)
 2. $\\{\tau_{r-1}\\}$ (équivaut à $P_{r-1}$)
 3. $\\{\tau_r\\}$ (équivaut à $P_r$)
@@ -179,19 +143,32 @@ Ces 8 mouvements candidats correspondent aux inversions des sous-ensembles de mu
 7. $\\{\tau_{r-1}, \tau_{r+1}\\}$ (double flip de préfixes disjoints)
 8. $\\{\tau_{r-1}, \tau_r, \tau_{r+1}\\}$ (équivaut à $\\{r\\} \triangle P_{r+1}$)
 
-Puisque cet ensemble de mouvements forme un groupe abélien (isomorphe à $(\mathbb{Z}_2)^3$), le voisinage est parfaitement fermé. On peut effectuer un échantillonnage de Heat-Bath exact sans aucun rejet (taux d'acceptation de 100%) en choisissant le mouvement $m \in \\{0, \dots, 7\\}$ avec la probabilité :
+### 6.2 Sélection Heat-Bath sur voisinage réduit à 4 états
 
-$$p_m = \frac{\exp(-\beta \Delta U_m)}{\sum_{k=0}^7 \exp(-\beta \Delta U_k)}$$
-
-#### Solution 3 : Heat-Bath exact sur le voisinage fermé à 4 états
-
-Si l'on souhaite limiter la complexité des calculs locaux, on peut se restreindre à la fermeture sur deux variables duales $\\{\tau_{r-1}, \tau_r\\}$. Cela génère un espace fermé de $2^2 = 4$ configurations, correspondant aux mouvements :
+Une alternative plus simple consiste à fermer le voisinage sur seulement deux variables duales $\\{\tau_{r-1}, \tau_r\\}$, ce qui donne $2^2 = 4$ configurations, correspondant aux mouvements :
 $$\mathcal{M}_{\text{réduit}} = \\{\varnothing, P_{r-1}, P_r, \\{r\\}\\}$$
 
 Le choix d'un mouvement $m \in \\{0, \dots, 3\\}$ s'effectue alors selon :
 $$p_m = \frac{\exp(-\beta \Delta U_m)}{\sum_{k=0}^3 \exp(-\beta \Delta U_k)}$$
+Cette dynamique s'exécute également à taux d'acceptation de 100% et s'implémente très simplement. La chaîne est réversible, apériodique grâce au mouvement nul, et irréductible car les flips de murs individuels $P_{r-1}$ et $P_r$ permettent d'atteindre n'importe quelle configuration.
 
-Cette dynamique est réversible, s'exécute à taux d'acceptation de 100% et s'implémente très simplement. La chaîne est apériodique grâce au mouvement nul, et irréductible car les flips de murs individuels $P_{r-1}$ et $P_r$ permettent d'atteindre n'importe quelle configuration duale.
+### 6.3 Approche Alternative : Metropolis-Hastings uniforme
+
+Il est possible d'utiliser une dynamique de proposition uniforme où le mouvement $A$ est proposé uniformément parmi les cinq choix $\\{A_0, \dots, A_4\\}$, puis accepté avec la probabilité de Metropolis-Hastings classique :
+
+$$\alpha_\beta(\sigma, A) = \min\bigl(1, \exp(-\beta\Delta U(A))\bigr)$$
+
+Cette dynamique est plus simple à implémenter au début mais présente un taux de rejet important à basse température (grand $\beta$).
+
+### 6.4 Sélection de Glauber sur 5 mouvements corrigée par Metropolis-Hastings
+
+Si l'on tient à utiliser exactement les 5 mouvements d'origine $\mathcal{M} = \\{\varnothing, \\{r\\}, P_{r-1}, P_r, P_{r+1}\\}$ tout en privilégiant les états de basse énergie, on peut proposer le mouvement $m \in \\{0..4\\}$ selon la probabilité Glauber :
+
+$$p_m = \frac{\exp(-\beta \Delta U_m)}{\sum_{k=0}^4 \exp(-\beta \Delta U_k)}$$
+
+Comme le voisinage $\mathcal{M}$ n'est pas fermé par composition, les voisinages d'états de départ et d'arrivée ne sont pas identiques, ce qui brise la balance détaillée. On restaure alors la réversibilité en appliquant un filtre d'acceptation de Metropolis-Hastings basé sur le ratio des fonctions de partition locales :
+
+$$\alpha(\sigma \to \sigma') = \min\left(1, \frac{\sum_{k=0}^4 \exp(-\beta U(\sigma \triangle A_k))}{\sum_{k=0}^4 \exp(-\beta U(\sigma' \triangle A_k))}\right)$$
 
 
 ## 7. Encodage optimal des arêtes
@@ -341,21 +318,18 @@ Pour optimiser le temps de calcul, on partitionne l'ensemble des arêtes $E$ en 
 * `short_edges` : Les arêtes locales (courte portée). Pour ces arêtes, on conserve la structure explicite `cross_short[q]` et les valeurs $y_e$ sont maintenues physiquement en mémoire avec un coût d'accès en $\mathcal{O}(1)$.
 * `long_edges` : Les arêtes de longue portée. Pour ces arêtes, on enregistre uniquement leurs identifiants dans les listes de coupe `cross_long[q]`, sans jamais mettre à jour leur valeur physique lors des transitions.
 
-### 11.3 Critère de Metropolis-Hastings à acceptation retardée (Delayed Acceptance)
+### 11.3 Critère d'acceptation retardée (Delayed Acceptance) pour Glauber
 
-Afin d'éviter d'évaluer le produit de parité sur l'arbre de Fenwick pour toutes les arêtes longues à chaque pas de temps, on applique un schéma de **Metropolis-Hastings à acceptation retardée** (*delayed acceptance*). Ce schéma en deux étapes est mathématiquement exact et préserve rigoureusement la loi cible :
+Afin d'éviter d'évaluer le produit de parité sur l'arbre de Fenwick pour toutes les arêtes longues et tous les mouvements à chaque pas de temps, on applique un schéma d'**acceptation retardée** (*delayed acceptance*) adapté à la sélection Glauber. Ce schéma en deux étapes est mathématiquement exact et préserve rigoureusement la loi cible :
 
-1. **Première étape (filtre court)** : On calcule la variation d'énergie uniquement sur la partie locale :
-   $$\Delta U_{\mathrm{short}} = \sum_{e \in \text{cross-short}[q]} y_e$$
-   On évalue le premier critère d'acceptation :
-   $$\alpha_1 = \min\bigl(1, e^{-\Delta U_{\mathrm{short}}}\bigr)$$
-   Si la transition est rejetée à cette étape, le mouvement est immédiatement abandonné. On ne calcule jamais les contributions des arêtes longues.
+1. **Première étape (filtre court / Glauber local)** : On calcule les variations d'énergie locales $\Delta U_{\text{short}, m}$ uniquement sur les arêtes courtes (en $\mathcal{O}(1)$). On échantillonne un mouvement $m$ parmi les candidats avec la probabilité de type Glauber local :
+   $$p_m = \frac{\exp(-\beta \Delta U_{\text{short}, m})}{\sum_k \exp(-\beta \Delta U_{\text{short}, k})}$$
+   Si le mouvement choisi est le mouvement nul ($m = 0$), la transition s'arrête immédiatement.
 
-2. **Seconde étape (filtre long)** : Si et seulement si la première étape est acceptée, on calcule la contribution des arêtes longues en évaluant leur signe courant à l'aide de l'arbre de Fenwick :
-   $$\Delta U_{\mathrm{long}} = \sum_{e \in \text{cross-long}[q]} W_e \prod_{t \in e} \tau_t$$
-   On évalue le second critère d'acceptation :
-   $$\alpha_2 = \min\bigl(1, e^{-\Delta U_{\mathrm{long}}}\bigr)$$
-   Si ce second test réussit, le mouvement est définitivement validé et le mur $\tau_q$ est mis à jour dans le Fenwick.
+2. **Seconde étape (filtre long / correction Metropolis-Hastings)** : Si $m > 0$, on calcule la contribution des arêtes longues $\Delta U_{\text{long}, m}$ uniquement pour le mouvement sélectionné $m$ en interrogeant l'arbre de Fenwick (en $\mathcal{O}(|cross-long| \log R)$). La probabilité d'acceptation finale de ce mouvement est donnée par la correction de Metropolis-Hastings :
+   $$\alpha = \min\left(1, \exp(-\beta \Delta U_{\text{long}, m}) \frac{\sum_k \exp(-\beta \Delta U_{\text{short}, k}(\sigma))}{\sum_k \exp(-\beta \Delta U_{\text{short}, k}(\sigma^{(m)}))}\right)$$
+   Si ce test d'acceptation réussit, le mouvement est validé et les variables duales $\tau$ correspondantes sont mises à jour dans le Fenwick. Sinon, le mouvement est rejeté (l'état reste $\sigma$).
+
 
 ### 11.4 Décomposition des singletons en deux flips de préfixes
 
@@ -560,7 +534,7 @@ Formaliser dans la documentation du projet :
 - La convention des poids ;
 - Les mouvements autorisés ;
 - La formule de variation d'énergie ;
-- La preuve de réversibilité Metropolis-Hastings (MH) ;
+- La preuve de réversibilité Glauber / Heat-Bath ;
 - L'hypothèse de congestion locale pour le coût en $\mathcal{O}(1)$.
 
 ### Phase 2 : indexation du graphe
@@ -578,7 +552,7 @@ cross
 
 Séparer le stockage en `short_edges` et `long_edges`. Ajouter les statistiques de congestion dans le rapport d'instance.
 
-### Phase 3 : échantillonneur MH géométrique avec arbre de Fenwick
+### Phase 3 : échantillonneur Glauber / Heat-Bath géométrique avec arbre de Fenwick
 
 Implémenter :
 - L'arbre de Fenwick modulo 2 pour l'état $\tau$.
@@ -649,7 +623,7 @@ L'objectif est de vérifier empiriquement que le coût d'une mise à jour est co
 Comparer au minimum :
 
 - L'échantillonneur de Metropolis classique (single-spin) ;
-- La dynamique de préfixe-MH géométrique ;
+- La dynamique de préfixe-Glauber géométrique ;
 - La dynamique de Swendsen-Wang signée (si disponible) ;
 - Éventuellement, une dynamique hybride alternant les propositions de préfixes et les propositions de single-spin.
 
@@ -715,6 +689,6 @@ $$\tau_t = \sigma_t\sigma_{t+1}$$
 
 Dans cette représentation, les flips de préfixes deviennent locaux, ce qui correspond physiquement aux erreurs de phase (switchs) rencontrées en haplotypage.
 
-L'encodage du graphe repose naturellement sur la distinction entre arêtes courtes (maintenues physiquement) et arêtes longues (évaluées de manière paresseuse à l'aide d'un arbre de Fenwick modulo 2). Cette distinction, combinée à un critère de Metropolis-Hastings à acceptation retardée, permet d'éviter l'évaluation systématique des contraintes longue portée sur les mouvements rejetés par l'énergie locale.
+L'encodage du graphe repose naturellement sur la distinction entre arêtes courtes (maintenues physiquement) et arêtes longues (évaluées de manière paresseuse à l'aide d'un arbre de Fenwick modulo 2). Cette distinction, combinée à un critère d'acceptation retardée adapté à Glauber, permet d'éviter l'évaluation des contraintes longue portée sur les mouvements rejetés.
 
 Enfin, l'estimation des corrélations spin-spin à distance $k$-hop est implémentée de façon creuse (*sparse*) et mise à jour via une accumulation événementielle. Cette stratégie garantit l'obtention exacte des moyennes temporelles MCMC tout en évitant le parcours global coûteux de toutes les paires à chaque itération.
