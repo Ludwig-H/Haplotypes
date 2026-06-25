@@ -8,7 +8,7 @@ $$0, 1, \dots, R-1$$
 
 Chaque read porte un spin caché :
 
-$$\sigma_i \in \{-1, +1\}$$
+$$\sigma_i \in \\{-1, +1\\}$$
 
 Les poids d'arêtes encodent des contraintes ferromagnétiques ou antiferromagnétiques :
 
@@ -32,7 +32,7 @@ Cette approche est très naturelle pour l'haplotypage : le renversement d'un blo
 
 On écrit l'énergie sous la forme "arêtes non satisfaites" :
 
-$$U(\sigma) = \sum_{\{i,j\}: W_{ij}>0} |W_{ij}| \mathbf{1}_{\sigma_i \neq \sigma_j} + \sum_{\{i,j\}: W_{ij}<0} |W_{ij}| \mathbf{1}_{\sigma_i = \sigma_j}$$
+$$U(\sigma) = \sum_{\\{i,j\\}: W_{ij}>0} |W_{ij}| \mathbf{1}_{\sigma_i \neq \sigma_j} + \sum_{\\{i,j\\}: W_{ij}<0} |W_{ij}| \mathbf{1}_{\sigma_i = \sigma_j}$$
 
 La postérieure cible est :
 
@@ -44,13 +44,13 @@ $$W_{ij} = \log \frac{ P(\mathrm{obs}_{ij}\mid \sigma_i\sigma_j=+1) }{ P(\mathrm
 
 Alors cette énergie est équivalente, à une constante additive près, à :
 
-$$\mu(\sigma\mid W) \propto \exp\left( \frac{1}{2} \sum_{\{i,j\}} W_{ij}\sigma_i\sigma_j \right)$$
+$$\mu(\sigma\mid W) \propto \exp\left( \frac{1}{2} \sum_{\\{i,j\\}} W_{ij}\sigma_i\sigma_j \right)$$
 
 La convention de ce rapport est donc : $W_{ij}$ est le poids signé naturel de l'arête, et l'énergie pénalise les contraintes non satisfaites par $|W_{ij}|$.
 
 ## 3. Formule générale de variation d'énergie
 
-Pour une arête $e=\{i,j\}$, posons :
+Pour une arête $e=\\{i,j\\}$, posons :
 
 $$y_{ij} = W_{ij}\sigma_i\sigma_j$$
 
@@ -64,11 +64,11 @@ $$\sigma_i'= \begin{cases} -\sigma_i, & i\in A,\\ \sigma_i, & i\notin A \end{cas
 
 Seules les arêtes coupées par $A$ changent de satisfaction. On note la coupe induite par $A$ :
 
-$$\delta(A) = \{\{i,j\}\in E: |\{i,j\}\cap A| = 1\}$$
+$$\delta(A) = \\{\\{i,j\\}\in E: |\\{i,j\\}\cap A| = 1\\}$$
 
 La variation d'énergie résultant du flip est alors :
 
-$$\Delta U(A) = U(\sigma')-U(\sigma) = \sum_{\{i,j\}\in \delta(A)} W_{ij}\sigma_i\sigma_j = \sum_{\{i,j\}\in \delta(A)} y_{ij}$$
+$$\Delta U(A) = U(\sigma')-U(\sigma) = \sum_{\\{i,j\\}\in \delta(A)} W_{ij}\sigma_i\sigma_j = \sum_{\\{i,j\\}\in \delta(A)} y_{ij}$$
 
 Cette identité est la clé algorithmique. Pour évaluer un mouvement, il suffit de sommer les contributions $y_{ij}$ des arêtes traversées par la coupe $\delta(A)$ induite par ce mouvement.
 
@@ -84,13 +84,13 @@ $$\sigma_i\sigma_j = \prod_{t=i}^{j-1}\tau_t$$
 
 Un flip de préfixe :
 
-$$P_q = \{0, 1, \dots, q\}$$
+$$P_q = \\{0, 1, \dots, q\\}$$
 
 ne modifie qu'un seul mur dans la représentation duale :
 
 $$\tau_q \mapsto -\tau_q$$
 
-Un flip singleton $\{r\}$ modifie au plus deux murs :
+Un flip singleton $\\{r\\}$ modifie au plus deux murs :
 
 $$\tau_{r-1}\mapsto -\tau_{r-1}, \qquad \tau_r\mapsto -\tau_r$$
 
@@ -102,17 +102,17 @@ Ainsi, dans les variables duales, les mouvements de préfixe sont parfaitement l
 
 On définit les préfixes :
 
-$$P_q = \{0, \dots, q\}$$
+$$P_q = \\{0, \dots, q\\}$$
 
 Par convention :
 
-$$P_{-1} = \varnothing, \qquad P_{R-1} = \{0, \dots, R-1\}$$
+$$P_{-1} = \varnothing, \qquad P_{R-1} = \\{0, \dots, R-1\\}$$
 
 Le flip de $P_{R-1}$ correspond à un flip global de tous les spins. Il ne change aucune énergie par paire (*pairwise*) car tous les produits $\sigma_i \sigma_j$ restent invariants.
 
 Pour un read $r$, on propose l'un des cinq mouvements d'inversion :
 
-$$\varnothing, \qquad \{r\}, \qquad P_{r-1}, \qquad P_r, \qquad P_{r+1}$$
+$$\varnothing, \qquad \\{r\\}, \qquad P_{r-1}, \qquad P_r, \qquad P_{r+1}$$
 
 Aux bords du domaine, les mouvements hors bornes sont rabattus de façon explicite :
 
@@ -125,7 +125,7 @@ Cette convention évite l'apparition de cas particuliers non triviaux et dangere
 
 Le noyau de proposition est indépendant de la configuration de spins actuelle :
 
-1. Tirer un read $r$ uniformément dans $\{0, \dots, R-1\}$ ;
+1. Tirer un read $r$ uniformément dans $\\{0, \dots, R-1\\}$ ;
 2. Tirer un type de mouvement parmi les cinq choix ;
 3. Appliquer le critère d'acceptation Metropolis-Hastings :
 
@@ -139,11 +139,11 @@ La proposition est symétrique parce que chaque mouvement est une involution et 
 
 $$\mu_\beta(\sigma) \propto \exp\bigl(-\beta U(\sigma)\bigr)$$
 
-La chaîne est apériodique grâce au mouvement nul. Elle est irréductible car les flips singletons $\{r\}$ sont toujours disponibles pour tous les sommets et engendrent l'ensemble de l'hypercube de configuration $\{-1, +1\}^R$.
+La chaîne est apériodique grâce au mouvement nul. Elle est irréductible car les flips singletons $\\{r\\}$ sont toujours disponibles pour tous les sommets et engendrent l'ensemble de l'hypercube de configuration $\\{-1, +1\\}^R$.
 
 ## 7. Encodage optimal des arêtes
 
-Pour chaque arête $e=\{i,j\}$, on stocke ses attributs de manière orientée :
+Pour chaque arête $e=\\{i,j\\}$, on stocke ses attributs de manière orientée :
 
 ```python
 left[e]  = min(i,j)
@@ -158,11 +158,11 @@ On pré-calcule ensuite deux familles de listes d'arêtes.
 
 *(Note : Si l'on utilise la décomposition des singletons décrite à la section 11.4, les listes incidentes `incident[r]` ne sont plus nécessaires à l'implémentation, réduisant ainsi la complexité structurelle).*
 
-$$\text{incident}[r] = \{ e \in E : e \text{ est incidente au read } r \}$$
+$$\text{incident}[r] = \\{ e \in E : e \text{ est incidente au read } r \\}$$
 
-Elles servent à évaluer le flip singleton $\{r\}$ :
+Elles servent à évaluer le flip singleton $\\{r\\}$ :
 
-$$\Delta U(\{r\}) = \sum_{e \in \text{incident}[r]} y[e]$$
+$$\Delta U(\\{r\\}) = \sum_{e \in \text{incident}[r]} y[e]$$
 
 Si le mouvement est accepté, les variables de toutes les arêtes incidentes sont mises à jour :
 
@@ -172,7 +172,7 @@ $$y[e] \leftarrow -y[e], \qquad e \in \text{incident}[r]$$
 
 Pour une coupe située entre le read $q$ et $q+1$, on définit :
 
-$$\text{cross}[q] = \{ e \in E : \text{left}[e] \le q < \text{right}[e] \}$$
+$$\text{cross}[q] = \\{ e \in E : \text{left}[e] \le q < \text{right}[e] \\}$$
 
 Elles servent à évaluer le flip de préfixe $P_q$ :
 
@@ -277,7 +277,7 @@ Pour une arête $e=(i,j)$ avec $i < j$, la valeur de l'interaction dépend uniqu
 
 $$y_e(\tau) = W_e \prod_{t=i}^{j-1} \tau_t$$
 
-Afin de pouvoir requêter rapidement cette valeur, on maintient l'état des variables duales $\tau \in \{0, 1\}$ (où $0$ représente le signe $+$ et $1$ le signe $-$) dans un **arbre de Fenwick** (*Fenwick tree*) opérant sous l'addition modulo 2 (groupe $\mathbb{Z}_2$).
+Afin de pouvoir requêter rapidement cette valeur, on maintient l'état des variables duales $\tau \in \\{0, 1\\}$ (où $0$ représente le signe $+$ et $1$ le signe $-$) dans un **arbre de Fenwick** (*Fenwick tree*) opérant sous l'addition modulo 2 (groupe $\mathbb{Z}_2$).
 
 * **Mise à jour d'un mur** : Un flip de préfixe $P_q$ modifie un seul élément $\tau_q \leftarrow 1 - \tau_q$ dans l'arbre de Fenwick en temps $\mathcal{O}(\log R)$.
 * **Requête sur une arête** : Le calcul du signe de $y_e$ s'effectue en interrogeant la somme cumulée modulo 2 de l'intervalle $[i, j-1]$ en temps $\mathcal{O}(\log R)$.
@@ -306,15 +306,15 @@ Afin d'éviter d'évaluer le produit de parité sur l'arbre de Fenwick pour tout
 
 ### 11.4 Décomposition des singletons en deux flips de préfixes
 
-L'inclusion des flips singletons $\{r\}$ peut également tirer profit de cette représentation. Au lieu de maintenir la structure `incident[r]` pour évaluer les spins individuels, on décompose le flip d'un singleton en la différence symétrique de deux flips de préfixes :
+L'inclusion des flips singletons $\\{r\\}$ peut également tirer profit de cette représentation. Au lieu de maintenir la structure `incident[r]` pour évaluer les spins individuels, on décompose le flip d'un singleton en la différence symétrique de deux flips de préfixes :
 
-$$\{r\} = P_{r-1} \triangle P_r$$
+$$\\{r\\} = P_{r-1} \triangle P_r$$
 
-Le calcul de la variation d'énergie $\Delta U(\{r\})$ s'effectue ainsi :
+Le calcul de la variation d'énergie $\Delta U(\\{r\\})$ s'effectue ainsi :
 1. Calculer la variation $\Delta_1 = \Delta U(P_{r-1})$ sur la configuration actuelle.
 2. Inverser temporairement la variable duale $\tau_{r-1}$ dans l'arbre de Fenwick.
 3. Calculer la variation $\Delta_2 = \Delta U(P_r)$ sur cette configuration intermédiaire.
-4. La variation totale d'énergie du singleton est la somme $\Delta U(\{r\}) = \Delta_1 + \Delta_2$.
+4. La variation totale d'énergie du singleton est la somme $\Delta U(\\{r\\}) = \Delta_1 + \Delta_2$.
 5. Si le mouvement est rejeté (par le filtre court ou long), on restaure simplement la variable $\tau_{r-1}$ dans le Fenwick. S'il est accepté, on applique également l'inversion de la variable $\tau_r$.
 
 Cette décomposition unifie le traitement des mouvements et supprime le besoin de stocker ou parcourir les listes d'arêtes incidentes `incident[r]`, ce qui est particulièrement avantageux pour les reads très connectés.
@@ -329,7 +329,7 @@ pour toutes les paires à distance de graphe au plus $k$, par exemple $k=4$.
 
 On définit l'ensemble des paires suivies :
 
-$$\mathcal{P}_k = \{(i,j) : i < j,\ d_G(i,j) \le k\}$$
+$$\mathcal{P}_k = \\{(i,j) : i < j,\ d_G(i,j) \le k\\}$$
 
 Pour éviter d'utiliser une matrice dense $R \times R$, on stocke les valeurs de manière creuse (*sparse*) sous forme de dictionnaire ou de tableau plat indexé par les éléments de $\mathcal{P}_k$.
 
@@ -372,15 +372,15 @@ On pré-calcule l'analogue des listes d'arêtes pour les paires de corrélation.
 
 Pour les flips singletons, la liste des paires incidentes `pair_incident` est définie par :
 
-$$\mathcal{P}_{\mathrm{incident}}(r) = \{ p = (i,j) \in \mathcal{P}_k : r=i \text{ ou } r=j \}$$
+$$\mathcal{P}_{\mathrm{incident}}(r) = \\{ p = (i,j) \in \mathcal{P}_k : r=i \text{ ou } r=j \\}$$
 
 Pour les flips de préfixe, la liste de coupe de paires `pair_cross` est définie par :
 
-$$\mathcal{P}_{\mathrm{cross}}(q) = \{ p = (i,j) \in \mathcal{P}_k : i \le q < j \}$$
+$$\mathcal{P}_{\mathrm{cross}}(q) = \\{ p = (i,j) \in \mathcal{P}_k : i \le q < j \\}$$
 
 Alors :
 
-- Si $\{r\}$ est accepté, seules les paires de `pair_incident[r]` changent de signe ;
+- Si $\\{r\\}$ est accepté, seules les paires de `pair_incident[r]` changent de signe ;
 - Si $P_q$ est accepté, seules les paires de `pair_cross[q]` changent de signe.
 
 Le coût de mise à jour des corrélations est donc proportionnel à la taille des listes affectées :
