@@ -765,8 +765,6 @@ U(\sigma) =
 |W_{ij}|\mathbf 1_{\sigma_i=\sigma_j}.
 $$
 
-Cette forme est compatible avec les dynamiques de type Swendsen-Wang signé.
-
 ## 15. Formats du graphe
 
 ### `nodes.tsv`
