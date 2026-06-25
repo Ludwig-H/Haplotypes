@@ -4,15 +4,11 @@
 
 On considère un graphe signé pondéré dont les sommets sont des reads ordonnés le long d'un chromosome :
 
-$$
-0, 1, \dots, R-1
-$$
+$$0, 1, \dots, R-1$$
 
 Chaque read porte un spin caché :
 
-$$
-\sigma_i \in \{-1, +1\}
-$$
+$$\sigma_i \in \{-1, +1\}$$
 
 Les poids d'arêtes encodent des contraintes ferromagnétiques ou antiferromagnétiques :
 
@@ -36,47 +32,19 @@ Cette approche est très naturelle pour l'haplotypage : le renversement d'un blo
 
 On écrit l'énergie sous la forme "arêtes non satisfaites" :
 
-$$
-U(\sigma)
-=
-\sum_{\{i,j\}: W_{ij}>0}
-|W_{ij}| \mathbf{1}_{\sigma_i \neq \sigma_j}
-+
-\sum_{\{i,j\}: W_{ij}<0}
-|W_{ij}| \mathbf{1}_{\sigma_i = \sigma_j}
-$$
+$$U(\sigma) = \sum_{\{i,j\}: W_{ij}>0} |W_{ij}| \mathbf{1}_{\sigma_i \neq \sigma_j} + \sum_{\{i,j\}: W_{ij}<0} |W_{ij}| \mathbf{1}_{\sigma_i = \sigma_j}$$
 
 La postérieure cible est :
 
-$$
-\mu(\sigma \mid W)
-\propto
-\exp\bigl(-U(\sigma)\bigr)
-$$
+$$\mu(\sigma \mid W) \propto \exp\bigl(-U(\sigma)\bigr)$$
 
 Si $W_{ij}$ est défini comme le rapport de log-vraisemblance (*log-likelihood ratio*) par paire :
 
-$$
-W_{ij}
-=
-\log
-\frac{
-P(\mathrm{obs}_{ij}\mid \sigma_i\sigma_j=+1)
-}{
-P(\mathrm{obs}_{ij}\mid \sigma_i\sigma_j=-1)
-}
-$$
+$$W_{ij} = \log \frac{ P(\mathrm{obs}_{ij}\mid \sigma_i\sigma_j=+1) }{ P(\mathrm{obs}_{ij}\mid \sigma_i\sigma_j=-1) }$$
 
 Alors cette énergie est équivalente, à une constante additive près, à :
 
-$$
-\mu(\sigma\mid W)
-\propto
-\exp\left(
-\frac{1}{2}
-\sum_{\{i,j\}} W_{ij}\sigma_i\sigma_j
-\right)
-$$
+$$\mu(\sigma\mid W) \propto \exp\left( \frac{1}{2} \sum_{\{i,j\}} W_{ij}\sigma_i\sigma_j \right)$$
 
 La convention de ce rapport est donc : $W_{ij}$ est le poids signé naturel de l'arête, et l'énergie pénalise les contraintes non satisfaites par $|W_{ij}|$.
 
@@ -84,45 +52,23 @@ La convention de ce rapport est donc : $W_{ij}$ est le poids signé naturel de l
 
 Pour une arête $e=\{i,j\}$, posons :
 
-$$
-y_{ij} = W_{ij}\sigma_i\sigma_j
-$$
+$$y_{ij} = W_{ij}\sigma_i\sigma_j$$
 
 Avec la convention ci-dessus, une arête est satisfaite si et seulement si :
 
-$$
-y_{ij} > 0
-$$
+$$y_{ij} > 0$$
 
 Soit $A$ un ensemble de sommets que l'on flippe (renversement de spins) :
 
-$$
-\sigma_i'=
-\begin{cases}
--\sigma_i, & i\in A,\\
-\sigma_i, & i\notin A
-\end{cases}
-$$
+$$\sigma_i'= \begin{cases} -\sigma_i, & i\in A,\\ \sigma_i, & i\notin A \end{cases}$$
 
 Seules les arêtes coupées par $A$ changent de satisfaction. On note la coupe induite par $A$ :
 
-$$
-\delta(A) = \{\{i,j\}\in E: |\{i,j\}\cap A| = 1\}
-$$
+$$\delta(A) = \{\{i,j\}\in E: |\{i,j\}\cap A| = 1\}$$
 
 La variation d'énergie résultant du flip est alors :
 
-$$
-\Delta U(A)
-=
-U(\sigma')-U(\sigma)
-=
-\sum_{\{i,j\}\in \delta(A)}
-W_{ij}\sigma_i\sigma_j
-=
-\sum_{\{i,j\}\in \delta(A)}
-y_{ij}
-$$
+$$\Delta U(A) = U(\sigma')-U(\sigma) = \sum_{\{i,j\}\in \delta(A)} W_{ij}\sigma_i\sigma_j = \sum_{\{i,j\}\in \delta(A)} y_{ij}$$
 
 Cette identité est la clé algorithmique. Pour évaluer un mouvement, il suffit de sommer les contributions $y_{ij}$ des arêtes traversées par la coupe $\delta(A)$ induite par ce mouvement.
 
@@ -130,39 +76,23 @@ Cette identité est la clé algorithmique. Pour évaluer un mouvement, il suffit
 
 La géométrie sur $\mathbb{Z}$ suggère d'introduire les variables de murs de domaine :
 
-$$
-\tau_t = \sigma_t\sigma_{t+1},
-\qquad
-t = 0, \dots, R-2
-$$
+$$\tau_t = \sigma_t\sigma_{t+1}, \qquad t = 0, \dots, R-2$$
 
 Pour $i < j$, on reconstruit l'interaction par :
 
-$$
-\sigma_i\sigma_j
-=
-\prod_{t=i}^{j-1}\tau_t
-$$
+$$\sigma_i\sigma_j = \prod_{t=i}^{j-1}\tau_t$$
 
 Un flip de préfixe :
 
-$$
-P_q = \{0, 1, \dots, q\}
-$$
+$$P_q = \{0, 1, \dots, q\}$$
 
 ne modifie qu'un seul mur dans la représentation duale :
 
-$$
-\tau_q \mapsto -\tau_q
-$$
+$$\tau_q \mapsto -\tau_q$$
 
 Un flip singleton $\{r\}$ modifie au plus deux murs :
 
-$$
-\tau_{r-1}\mapsto -\tau_{r-1},
-\qquad
-\tau_r\mapsto -\tau_r
-$$
+$$\tau_{r-1}\mapsto -\tau_{r-1}, \qquad \tau_r\mapsto -\tau_r$$
 
 en ignorant les murs hors bornes.
 
@@ -172,33 +102,17 @@ Ainsi, dans les variables duales, les mouvements de préfixe sont parfaitement l
 
 On définit les préfixes :
 
-$$
-P_q = \{0, \dots, q\}
-$$
+$$P_q = \{0, \dots, q\}$$
 
 Par convention :
 
-$$
-P_{-1} = \varnothing,
-\qquad
-P_{R-1} = \{0, \dots, R-1\}
-$$
+$$P_{-1} = \varnothing, \qquad P_{R-1} = \{0, \dots, R-1\}$$
 
 Le flip de $P_{R-1}$ correspond à un flip global de tous les spins. Il ne change aucune énergie par paire (*pairwise*) car tous les produits $\sigma_i \sigma_j$ restent invariants.
 
 Pour un read $r$, on propose l'un des cinq mouvements d'inversion :
 
-$$
-\varnothing,
-\qquad
-\{r\},
-\qquad
-P_{r-1},
-\qquad
-P_r,
-\qquad
-P_{r+1}
-$$
+$$\varnothing, \qquad \{r\}, \qquad P_{r-1}, \qquad P_r, \qquad P_{r+1}$$
 
 Aux bords du domaine, les mouvements hors bornes sont rabattus de façon explicite :
 
@@ -215,25 +129,15 @@ Le noyau de proposition est indépendant de la configuration de spins actuelle :
 2. Tirer un type de mouvement parmi les cinq choix ;
 3. Appliquer le critère d'acceptation Metropolis-Hastings :
 
-$$
-\alpha(\sigma,A)
-=
-\min\bigl(1, \exp(-\Delta U(A))\bigr)
-$$
+$$\alpha(\sigma,A) = \min\bigl(1, \exp(-\Delta U(A))\bigr)$$
 
 Si on travaille à température inverse $\beta$, le taux devient :
 
-$$
-\alpha_\beta(\sigma,A)
-=
-\min\bigl(1, \exp(-\beta\Delta U(A))\bigr)
-$$
+$$\alpha_\beta(\sigma,A) = \min\bigl(1, \exp(-\beta\Delta U(A))\bigr)$$
 
 La proposition est symétrique parce que chaque mouvement est une involution et que sa probabilité de sélection ne dépend pas de l'état du système. Le noyau est donc réversible par rapport à la mesure :
 
-$$
-\mu_\beta(\sigma) \propto \exp\bigl(-\beta U(\sigma)\bigr)
-$$
+$$\mu_\beta(\sigma) \propto \exp\bigl(-\beta U(\sigma)\bigr)$$
 
 La chaîne est apériodique grâce au mouvement nul. Elle est irréductible car les flips singletons $\{r\}$ sont toujours disponibles pour tous les sommets et engendrent l'ensemble de l'hypercube de configuration $\{-1, +1\}^R$.
 
@@ -254,49 +158,29 @@ On pré-calcule ensuite deux familles de listes d'arêtes.
 
 *(Note : Si l'on utilise la décomposition des singletons décrite à la section 11.4, les listes incidentes `incident[r]` ne sont plus nécessaires à l'implémentation, réduisant ainsi la complexité structurelle).*
 
-$$
-\text{incident}[r] = \{ e \in E : e \text{ est incidente au read } r \}
-$$
+$$\text{incident}[r] = \{ e \in E : e \text{ est incidente au read } r \}$$
 
 Elles servent à évaluer le flip singleton $\{r\}$ :
 
-$$
-\Delta U(\{r\})
-=
-\sum_{e \in \text{incident}[r]} y[e]
-$$
+$$\Delta U(\{r\}) = \sum_{e \in \text{incident}[r]} y[e]$$
 
 Si le mouvement est accepté, les variables de toutes les arêtes incidentes sont mises à jour :
 
-$$
-y[e] \leftarrow -y[e],
-\qquad
-e \in \text{incident}[r]
-$$
+$$y[e] \leftarrow -y[e], \qquad e \in \text{incident}[r]$$
 
 ### 7.2 Listes de coupe
 
 Pour une coupe située entre le read $q$ et $q+1$, on définit :
 
-$$
-\text{cross}[q] = \{ e \in E : \text{left}[e] \le q < \text{right}[e] \}
-$$
+$$\text{cross}[q] = \{ e \in E : \text{left}[e] \le q < \text{right}[e] \}$$
 
 Elles servent à évaluer le flip de préfixe $P_q$ :
 
-$$
-\Delta U(P_q)
-=
-\sum_{e \in \text{cross}[q]} y[e]
-$$
+$$\Delta U(P_q) = \sum_{e \in \text{cross}[q]} y[e]$$
 
 Si le mouvement est accepté :
 
-$$
-y[e] \leftarrow -y[e],
-\qquad
-e \in \text{cross}[q]
-$$
+$$y[e] \leftarrow -y[e], \qquad e \in \text{cross}[q]$$
 
 Pour $q = -1$ et $q = R-1$, la coupe est vide (le coût est nul, ce qui est cohérent avec le mouvement nul ou global).
 
@@ -304,25 +188,17 @@ Pour $q = -1$ et $q = R-1$, la coupe est vide (le coût est nul, ce qui est coh�
 
 Le coût exact d'une itération de la dynamique est :
 
-$$
-\mathcal{O}(|\text{incident}[r]|)
-$$
+$$\mathcal{O}(|\text{incident}[r]|)$$
 
 pour un flip singleton, et :
 
-$$
-\mathcal{O}(|\text{cross}[q]|)
-$$
+$$\mathcal{O}(|\text{cross}[q]|)$$
 
 pour un flip de préfixe.
 
 On obtient donc un coût en temps de calcul en $\mathcal{O}(1)$ si l'on impose une hypothèse de congestion bornée :
 
-$$
-\sup_r |\text{incident}[r]| = \mathcal{O}(1),
-\qquad
-\sup_q |\text{cross}[q]| = \mathcal{O}(1)
-$$
+$$\sup_r |\text{incident}[r]| = \mathcal{O}(1), \qquad \sup_q |\text{cross}[q]| = \mathcal{O}(1)$$
 
 Cette hypothèse est réaliste pour un graphe d'haplotypage local, avec une couverture contrôlée et des longueurs de reads bornées. Elle n'est pas garantie en pire cas si l'on observe des reads à longue portée (comme discuté en section 11).
 
@@ -342,15 +218,11 @@ Ces indicateurs permettent de valider si la dynamique s'exécutera effectivement
 
 La construction naïve consiste à ajouter chaque arête $e=(i,j)$ dans toutes les listes de coupe `cross[q]` pour :
 
-$$
-i \le q < j
-$$
+$$i \le q < j$$
 
 Son coût mémoire (en nombre d'entrées stockées) est :
 
-$$
-\sum_{e=(i,j)} (j-i)
-$$
+$$\sum_{e=(i,j)} (j-i)$$
 
 Ce coût est acceptable si le graphe est local dans l'ordre des reads. Sinon, il peut devenir prohibitif.
 
@@ -384,12 +256,7 @@ Un flip de préfixe $P_q$ change seulement $\tau_q \leftarrow -\tau_q$. Un flip 
 
 Pour reconstruire un spin individuel à la demande, il faut calculer :
 
-$$
-\sigma_i
-=
-\sigma_0
-\prod_{t=0}^{i-1}\tau_t
-$$
+$$\sigma_i = \sigma_0 \prod_{t=0}^{i-1}\tau_t$$
 
 Si l'on a besoin de requêtes fréquentes de spins individuels, on peut utiliser un arbre de Fenwick (*Fenwick tree*) de parités pour obtenir n'importe quel $\sigma_i$ en $\mathcal{O}(\log R)$. Cependant, pour le calcul de l'énergie de la dynamique, il n'est pas nécessaire de reconstruire les spins : les valeurs `y[e]` suffisent.
 
@@ -408,9 +275,7 @@ Pour résoudre ce problème, on abandonne la mise à jour physique des variables
 
 Pour une arête $e=(i,j)$ avec $i < j$, la valeur de l'interaction dépend uniquement des murs de domaine inclus dans son intervalle :
 
-$$
-y_e(\tau) = W_e \prod_{t=i}^{j-1} \tau_t
-$$
+$$y_e(\tau) = W_e \prod_{t=i}^{j-1} \tau_t$$
 
 Afin de pouvoir requêter rapidement cette valeur, on maintient l'état des variables duales $\tau \in \{0, 1\}$ (où $0$ représente le signe $+$ et $1$ le signe $-$) dans un **arbre de Fenwick** (*Fenwick tree*) opérant sous l'addition modulo 2 (groupe $\mathbb{Z}_2$).
 
@@ -428,32 +293,22 @@ Pour optimiser le temps de calcul, on partitionne l'ensemble des arêtes $E$ en 
 Afin d'éviter d'évaluer le produit de parité sur l'arbre de Fenwick pour toutes les arêtes longues à chaque pas de temps, on applique un schéma de **Metropolis-Hastings à acceptation retardée** (*delayed acceptance*). Ce schéma en deux étapes est mathématiquement exact et préserve rigoureusement la loi cible :
 
 1. **Première étape (filtre court)** : On calcule la variation d'énergie uniquement sur la partie locale :
-   $$
-   \Delta U_{\mathrm{short}} = \sum_{e \in \text{cross-short}[q]} y_e
-   $$
+   $$\Delta U_{\mathrm{short}} = \sum_{e \in \text{cross-short}[q]} y_e$$
    On évalue le premier critère d'acceptation :
-   $$
-   \alpha_1 = \min\bigl(1, e^{-\Delta U_{\mathrm{short}}}\bigr)
-   $$
+   $$\alpha_1 = \min\bigl(1, e^{-\Delta U_{\mathrm{short}}}\bigr)$$
    Si la transition est rejetée à cette étape, le mouvement est immédiatement abandonné. On ne calcule jamais les contributions des arêtes longues.
 
 2. **Seconde étape (filtre long)** : Si et seulement si la première étape est acceptée, on calcule la contribution des arêtes longues en évaluant leur signe courant à l'aide de l'arbre de Fenwick :
-   $$
-   \Delta U_{\mathrm{long}} = \sum_{e \in \text{cross-long}[q]} W_e \prod_{t \in e} \tau_t
-   $$
+   $$\Delta U_{\mathrm{long}} = \sum_{e \in \text{cross-long}[q]} W_e \prod_{t \in e} \tau_t$$
    On évalue le second critère d'acceptation :
-   $$
-   \alpha_2 = \min\bigl(1, e^{-\Delta U_{\mathrm{long}}}\bigr)
-   $$
+   $$\alpha_2 = \min\bigl(1, e^{-\Delta U_{\mathrm{long}}}\bigr)$$
    Si ce second test réussit, le mouvement est définitivement validé et le mur $\tau_q$ est mis à jour dans le Fenwick.
 
 ### 11.4 Décomposition des singletons en deux flips de préfixes
 
 L'inclusion des flips singletons $\{r\}$ peut également tirer profit de cette représentation. Au lieu de maintenir la structure `incident[r]` pour évaluer les spins individuels, on décompose le flip d'un singleton en la différence symétrique de deux flips de préfixes :
 
-$$
-\{r\} = P_{r-1} \triangle P_r
-$$
+$$\{r\} = P_{r-1} \triangle P_r$$
 
 Le calcul de la variation d'énergie $\Delta U(\{r\})$ s'effectue ainsi :
 1. Calculer la variation $\Delta_1 = \Delta U(P_{r-1})$ sur la configuration actuelle.
@@ -468,17 +323,13 @@ Cette décomposition unifie le traitement des mouvements et supprime le besoin d
 
 On souhaite estimer l'espérance des corrélations :
 
-$$
-C_{ij} = \mathbb{E}_\mu[\sigma_i\sigma_j]
-$$
+$$C_{ij} = \mathbb{E}_\mu[\sigma_i\sigma_j]$$
 
 pour toutes les paires à distance de graphe au plus $k$, par exemple $k=4$.
 
 On définit l'ensemble des paires suivies :
 
-$$
-\mathcal{P}_k = \{(i,j) : i < j,\ d_G(i,j) \le k\}
-$$
+$$\mathcal{P}_k = \{(i,j) : i < j,\ d_G(i,j) \le k\}$$
 
 Pour éviter d'utiliser une matrice dense $R \times R$, on stocke les valeurs de manière creuse (*sparse*) sous forme de dictionnaire ou de tableau plat indexé par les éléments de $\mathcal{P}_k$.
 
@@ -492,13 +343,7 @@ last_time[p]
 
 L'estimateur empirique après $T$ pas de la chaîne est :
 
-$$
-\widehat{C}_{ij}
-=
-\frac{1}{T}
-\sum_{t=0}^{T-1}
-\sigma_i^{(t)}\sigma_j^{(t)}
-$$
+$$\widehat{C}_{ij} = \frac{1}{T} \sum_{t=0}^{T-1} \sigma_i^{(t)}\sigma_j^{(t)}$$
 
 ## 13. Accumulation événementielle des corrélations
 
@@ -527,15 +372,11 @@ On pré-calcule l'analogue des listes d'arêtes pour les paires de corrélation.
 
 Pour les flips singletons, la liste des paires incidentes `pair_incident` est définie par :
 
-$$
-\mathcal{P}_{\mathrm{incident}}(r) = \{ p = (i,j) \in \mathcal{P}_k : r=i \text{ ou } r=j \}
-$$
+$$\mathcal{P}_{\mathrm{incident}}(r) = \{ p = (i,j) \in \mathcal{P}_k : r=i \text{ ou } r=j \}$$
 
 Pour les flips de préfixe, la liste de coupe de paires `pair_cross` est définie par :
 
-$$
-\mathcal{P}_{\mathrm{cross}}(q) = \{ p = (i,j) \in \mathcal{P}_k : i \le q < j \}
-$$
+$$\mathcal{P}_{\mathrm{cross}}(q) = \{ p = (i,j) \in \mathcal{P}_k : i \le q < j \}$$
 
 Alors :
 
@@ -544,9 +385,7 @@ Alors :
 
 Le coût de mise à jour des corrélations est donc proportionnel à la taille des listes affectées :
 
-$$
-\mathcal{O}(|\mathcal{P}_{\mathrm{incident}}(r)|) \quad \text{ou} \quad \mathcal{O}(|\mathcal{P}_{\mathrm{cross}}(q)|)
-$$
+$$\mathcal{O}(|\mathcal{P}_{\mathrm{incident}}(r)|) \quad \text{ou} \quad \mathcal{O}(|\mathcal{P}_{\mathrm{cross}}(q)|)$$
 
 Sous hypothèse de degré borné et pour $k$ fixé, la taille totale de $\mathcal{P}_k$ est en $\mathcal{O}(R)$, et ces mises à jour restent locales en moyenne.
 
@@ -560,9 +399,7 @@ On construit $\mathcal{P}_k$ par une recherche en largeur (BFS) tronquée depuis
 
 La complexité globale de construction est de :
 
-$$
-\mathcal{O}\left(R \cdot d^k\right)
-$$
+$$\mathcal{O}\left(R \cdot d^k\right)$$
 
 où $d$ est le degré moyen du graphe. Pour $k=4$, cette complexité n'est acceptable que si le graphe est creux. Il est donc recommandé d'enregistrer et de surveiller les variables de congestion suivantes :
 
@@ -636,25 +473,17 @@ Sur de petits graphes aléatoires, comparer la variable `DeltaU_fast(A)` avec le
 
 Vérifier :
 
-$$
-U(\sigma) = U(-\sigma)
-$$
+$$U(\sigma) = U(-\sigma)$$
 
 et :
 
-$$
-y_{ij}(\sigma) = y_{ij}(-\sigma)
-$$
+$$y_{ij}(\sigma) = y_{ij}(-\sigma)$$
 
 ### Test 3 : stationnarité sur petit $R$
 
 Pour $R \le 16$, énumérer l'ensemble des $2^R$ configurations possibles de spins, calculer exactement la mesure de Boltzmann :
 
-$$
-\mu(\sigma)
-=
-\frac{\exp\bigl(-U(\sigma)\bigr)}{\mathcal{Z}}
-$$
+$$\mu(\sigma) = \frac{\exp\bigl(-U(\sigma)\bigr)}{\mathcal{Z}}$$
 
 et comparer les fréquences empiriques obtenues par MCMC aux probabilités exactes.
 
@@ -662,11 +491,7 @@ et comparer les fréquences empiriques obtenues par MCMC aux probabilités exact
 
 Pour des paires de configurations reliées par un mouvement autorisé, vérifier numériquement la relation :
 
-$$
-\mu(\sigma)K(\sigma, \sigma')
-=
-\mu(\sigma')K(\sigma', \sigma)
-$$
+$$\mu(\sigma)K(\sigma, \sigma') = \mu(\sigma')K(\sigma', \sigma)$$
 
 ### Test 5 : corrélations
 
@@ -801,9 +626,7 @@ L'ordre d'indexation des reads le long de l'axe linéaire doit être choisi soig
 
 Le meilleur ordre est celui qui minimise la congestion maximale des coupes :
 
-$$
-\max_q |\text{cross}[q]|
-$$
+$$\max_q |\text{cross}[q]|$$
 
 Il convient donc de mesurer et rapporter cette congestion pour plusieurs ordres possibles si nécessaire.
 
@@ -811,9 +634,7 @@ Il convient donc de mesurer et rapporter cette congestion pour plusieurs ordres 
 
 La postérieure est invariante par flip global (symétrie $\mathbb{Z}_2$) :
 
-$$
-\sigma \mapsto -\sigma
-$$
+$$\sigma \mapsto -\sigma$$
 
 Les corrélations $\sigma_i \sigma_j$ sont invariantes sous cette symétrie et sont donc bien définies. En revanche, les espérances individuelles $\mathbb{E}[\sigma_i]$ sont nulles par symétrie à moins de fixer la jauge.
 
@@ -837,9 +658,7 @@ La dynamique proposée est mathématiquement rigoureuse si elle est formulée co
 
 Son point fort réside dans la représentation duale des variables de mur :
 
-$$
-\tau_t = \sigma_t\sigma_{t+1}
-$$
+$$\tau_t = \sigma_t\sigma_{t+1}$$
 
 Dans cette représentation, les flips de préfixes deviennent locaux, ce qui correspond physiquement aux erreurs de phase (switchs) rencontrées en haplotypage.
 
