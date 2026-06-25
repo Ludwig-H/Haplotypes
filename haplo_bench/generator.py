@@ -77,11 +77,14 @@ def generate(config_path, out_dir, seed=None):
     read_haps = np.random.choice([0, 1], size=num_reads)
     
     # Error rate
-    epsilon = 0.0005 # pacbio_hifi default
-    if preset == "ont_q20" or preset == "ont_ultralong":
-        epsilon = 0.01
-    elif preset == "illumina_pe150":
-        epsilon = 0.001
+    noise_config = config.get("noise", {})
+    epsilon = noise_config.get("epsilon_effective", 0.10)
+    
+    if "epsilon_effective" not in noise_config:
+        if preset == "ont_q20" or preset == "ont_ultralong":
+            epsilon = 0.01
+        elif preset == "illumina_pe150":
+            epsilon = 0.001
         
     # Sort reads by start position for fast overlap check
     sort_idx = np.argsort(read_starts)

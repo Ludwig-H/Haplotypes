@@ -10,7 +10,7 @@
     "n_edges": 235805,
     "mean_overlap_length": 9573.21,
     "mean_shared_variants_per_edge": 7.36,
-    "positive_edges_fraction": 0.5006,
-    "negative_edges_fraction": 0.4994,
-    "mean_abs_weight": 50.7404
+    "positive_edges_fraction": 0.5214,
+    "negative_edges_fraction": 0.4786,
+    "mean_abs_weight": 7.2564
 }

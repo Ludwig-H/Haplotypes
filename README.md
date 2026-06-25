@@ -1002,8 +1002,8 @@ reads:
 
 noise:
   model: phred_effective
-  mean_q: 33
-  epsilon_effective: 0.0005
+  mean_q: 10
+  epsilon_effective: 0.10
   indels: false
 
 graph:
