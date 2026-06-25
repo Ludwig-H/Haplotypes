@@ -132,7 +132,8 @@ C'est la dynamique par défaut recommandée. On définit un voisinage fermé de 
 Puisque cet ensemble de mouvements forme un groupe abélien fermé (isomorphe à $(\mathbb{Z}_2)^3$), le voisinage est symétrique. On effectue alors un échantillonnage de Heat-Bath exact avec un **taux d'acceptation de 100% (sans rejet)**. Le mouvement $m \in \\{0, \dots, 7\\}$ est choisi avec la probabilité :
 
 $$p_m = \frac{\exp(-\beta \Delta U_m)}{\sum_{k=0}^7 \exp(-\beta \Delta U_k)}$$
-*(Note : Le mouvement nul $m=0$ (correspondant à $\varnothing$) ayant une variation d'énergie nulle $\Delta U_0 = 0$, son poids de Boltzmann au dénominateur vaut toujours $\exp(-\beta \cdot 0) = 1$.)*
+
+Note : Le mouvement nul $m=0$ (correspondant à $\varnothing$) ayant une variation d'énergie nulle $\Delta U_0 = 0$, son poids de Boltzmann au dénominateur vaut toujours $\exp(-\beta \cdot 0) = 1$.
 
 Les 8 mouvements candidats correspondent aux inversions des sous-ensembles de murs suivants :
 1. $\varnothing$ (mouvement nul)
@@ -151,7 +152,9 @@ $$\mathcal{M}_{\text{réduit}} = \\{\varnothing, P_{r-1}, P_r, \\{r\\}\\}$$
 
 Le choix d'un mouvement $m \in \\{0, \dots, 3\\}$ s'effectue alors selon :
 $$p_m = \frac{\exp(-\beta \Delta U_m)}{\sum_{k=0}^3 \exp(-\beta \Delta U_k)}$$
-*(Note : Ici aussi, le mouvement nul $m=0$ a un poids de Boltzmann égal à $1$ dans la somme.)*
+
+Note : Ici aussi, le mouvement nul $m=0$ a un poids de Boltzmann égal à $1$ dans la somme.
+
 Cette dynamique s'exécute également à taux d'acceptation de 100% et s'implémente très simplement. La chaîne est réversible, apériodique grâce au mouvement nul, et irréductible car les flips de murs individuels $P_{r-1}$ et $P_r$ permettent d'atteindre n'importe quelle configuration.
 
 ### 6.3 Approche Alternative : Metropolis-Hastings uniforme
@@ -167,7 +170,8 @@ Cette dynamique est plus simple à implémenter au début mais présente un taux
 Si l'on tient à utiliser exactement les 5 mouvements d'origine $\mathcal{M} = \\{\varnothing, \\{r\\}, P_{r-1}, P_r, P_{r+1}\\}$ tout en privilégiant les états de basse énergie, on peut proposer le mouvement $m \in \\{0..4\\}$ selon la probabilité Glauber :
 
 $$p_m = \frac{\exp(-\beta \Delta U_m)}{\sum_{k=0}^4 \exp(-\beta \Delta U_k)}$$
-*(Note : Le mouvement nul $\varnothing$ ($m=0$) contribue pour un terme égal à $1$ au dénominateur.)*
+
+Note : Le mouvement nul $\varnothing$ ($m=0$) contribue pour un terme égal à $1$ au dénominateur.
 
 Comme le voisinage $\mathcal{M}$ n'est pas fermé par composition, les voisinages d'états de départ et d'arrivée ne sont pas identiques, ce qui brise la balance détaillée. On restaure alors la réversibilité en appliquant un filtre d'acceptation de Metropolis-Hastings basé sur le ratio des fonctions de partition locales :
 
