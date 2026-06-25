@@ -121,25 +121,78 @@ Aux bords du domaine, les mouvements hors bornes sont rabattus de façon explici
 
 Cette convention évite l'apparition de cas particuliers non triviaux et dangereux dans l'implémentation.
 
-## 6. Noyau Metropolis-Hastings
+## 6. Noyau de transition : Metropolis-Hastings vs Glauber / Heat-Bath
 
-Le noyau de proposition est indépendant de la configuration de spins actuelle :
+Pour un read $r$ choisi uniformément, on dispose d'un ensemble de mouvements candidats. Deux grandes classes de dynamiques peuvent être envisagées pour effectuer la transition de spin.
 
-1. Tirer un read $r$ uniformément dans $\\{0, \dots, R-1\\}$ ;
-2. Tirer un type de mouvement parmi les cinq choix ;
-3. Appliquer le critère d'acceptation Metropolis-Hastings :
+### 6.1 Approche A : Metropolis-Hastings uniforme
 
-$$\alpha(\sigma,A) = \min\bigl(1, \exp(-\Delta U(A))\bigr)$$
+C'est la dynamique par défaut. Le mouvement $A$ est proposé uniformément parmi les cinq choix $\\{A_0, \dots, A_4\\}$, puis accepté avec la probabilité de Metropolis-Hastings classique :
 
-Si on travaille à température inverse $\beta$, le taux devient :
+$$\alpha_\beta(\sigma, A) = \min\bigl(1, \exp(-\beta\Delta U(A))\bigr)$$
 
-$$\alpha_\beta(\sigma,A) = \min\bigl(1, \exp(-\beta\Delta U(A))\bigr)$$
+Cette dynamique est réversible et simple, mais elle présente un taux de rejet important à basse température (grand $\beta$) lorsque les mouvements proposés augmentent fortement l'énergie.
 
-La proposition est symétrique parce que chaque mouvement est une involution et que sa probabilité de sélection ne dépend pas de l'état du système. Le noyau est donc réversible par rapport à la mesure :
+### 6.2 Approche B : Sélection de Glauber / Heat-Bath sur les 5 mouvements
 
-$$\mu_\beta(\sigma) \propto \exp\bigl(-\beta U(\sigma)\bigr)$$
+On souhaite plutôt proposer un mouvement $m \in \\{0, \dots, 4\\}$ avec une probabilité proportionnelle à son poids de Boltzmann (dynamique de type Glauber / Heat-Bath) :
 
-La chaîne est apériodique grâce au mouvement nul. Elle est irréductible car les flips singletons $\\{r\\}$ sont toujours disponibles pour tous les sommets et engendrent l'ensemble de l'hypercube de configuration $\\{-1, +1\\}^R$.
+$$p_m = \frac{\exp(-\beta \Delta U_m)}{\sum_{k=0}^4 \exp(-\beta \Delta U_k)}$$
+
+#### Condition de réversibilité et non-fermeture du voisinage
+
+Pour que cette sélection directe (sans rejet) satisfasse la balance détaillée, il est indispensable que le voisinage des états accessibles soit **symétrique (fermé par composition)**. C'est-à-dire que si l'on peut passer de $\sigma$ à $\sigma'$ via l'un des 5 mouvements associés à $r$, le voisinage des 5 états accessibles depuis $\sigma'$ pour ce même $r$ doit être identique à celui de $\sigma$.
+
+Or, le jeu de mouvements proposé :
+$$\mathcal{M} = \\{\varnothing, \\{r\\}, P_{r-1}, P_r, P_{r+1}\\}$$
+n'est **pas fermé**. En termes de variables de mur de domaine $\tau$, ces mouvements correspondent respectivement à inverser les sous-ensembles de murs suivants :
+$$\\{\varnothing\\}, \quad \\{\tau_{r-1}, \tau_r\\}, \quad \\{\tau_{r-1}\\}, \quad \\{\tau_r\\}, \quad \\{\tau_{r+1}\\}$$
+
+Si l'on applique le mouvement $P_{r-1}$ (inversion de $\tau_{r-1}$) pour passer de $\sigma$ à $\sigma'$, et qu'à partir de $\sigma'$ on applique le mouvement $P_{r+1}$ (inversion de $\tau_{r+1}$), l'état final $\sigma' \triangle P_{r+1} = \sigma \triangle P_{r-1} \triangle P_{r+1}$ n'est pas accessible en un seul mouvement depuis $\sigma$ (car l'inversion simultanée de $\\{\tau_{r-1}, \tau_{r+1}\\}$ n'est pas dans $\mathcal{M}$).
+
+Puisque les voisinages ne sont pas identiques, les dénominateurs (fonctions de partition locales) diffèrent :
+$$\sum_{k=0}^4 \exp(-\beta U(\sigma \triangle A_k)) \neq \sum_{k=0}^4 \exp(-\beta U(\sigma' \triangle A_k))$$
+
+Une sélection directe par la probabilité $p_m$ **viole donc la balance détaillée**.
+
+### 6.3 Solutions pour implémenter une dynamique de Glauber exacte
+
+Trois solutions rigoureuses permettent d'introduire cette dynamique préférentielle tout en garantissant la réversibilité.
+
+#### Solution 1 : Sélection de Glauber corrigée par Metropolis-Hastings
+
+On propose le mouvement $m$ selon la distribution de Glauber $p_m$. Pour compenser l'asymétrie des voisinages, on applique un filtre d'acceptation de Metropolis-Hastings. La probabilité d'acceptation devient le ratio des fonctions de partition locales :
+
+$$\alpha(\sigma \to \sigma') = \min\left(1, \frac{\sum_{k=0}^4 \exp(-\beta U(\sigma \triangle A_k))}{\sum_{k=0}^4 \exp(-\beta U(\sigma' \triangle A_k))}\right)$$
+
+#### Solution 2 : Heat-Bath exact sur le voisinage fermé à 8 états (Recommandé)
+
+On définit un voisinage fermé en considérant l'ensemble de toutes les configurations de spins générées par les flips de n'importe quel sous-ensemble des three variables duales affectées $\\{\tau_{r-1}, \tau_r, \tau_{r+1}\\}$. Cela génère un espace de $2^3 = 8$ configurations possibles.
+
+Ces 8 mouvements candidats correspondent aux inversions des sous-ensembles de murs suivants :
+1. $\varnothing$ (mouvement nul)
+2. $\\{\tau_{r-1}\\}$ (équivaut à $P_{r-1}$)
+3. $\\{\tau_r\\}$ (équivaut à $P_r$)
+4. $\\{\tau_{r+1}\\}$ (équivaut à $P_{r+1}$)
+5. $\\{\tau_{r-1}, \tau_r\\}$ (équivaut à $\\{r\\}$)
+6. $\\{\tau_r, \tau_{r+1}\\}$ (équivaut à $\\{r+1\\}$)
+7. $\\{\tau_{r-1}, \tau_{r+1}\\}$ (double flip de préfixes disjoints)
+8. $\\{\tau_{r-1}, \tau_r, \tau_{r+1}\\}$ (équivaut à $\\{r\\} \triangle P_{r+1}$)
+
+Puisque cet ensemble de mouvements forme un groupe abélien (isomorphe à $(\mathbb{Z}_2)^3$), le voisinage est parfaitement fermé. On peut effectuer un échantillonnage de Heat-Bath exact sans aucun rejet (taux d'acceptation de 100%) en choisissant le mouvement $m \in \\{0, \dots, 7\\}$ avec la probabilité :
+
+$$p_m = \frac{\exp(-\beta \Delta U_m)}{\sum_{k=0}^7 \exp(-\beta \Delta U_k)}$$
+
+#### Solution 3 : Heat-Bath exact sur le voisinage fermé à 4 états
+
+Si l'on souhaite limiter la complexité des calculs locaux, on peut se restreindre à la fermeture sur deux variables duales $\\{\tau_{r-1}, \tau_r\\}$. Cela génère un espace fermé de $2^2 = 4$ configurations, correspondant aux mouvements :
+$$\mathcal{M}_{\text{réduit}} = \\{\varnothing, P_{r-1}, P_r, \\{r\\}\\}$$
+
+Le choix d'un mouvement $m \in \\{0, \dots, 3\\}$ s'effectue alors selon :
+$$p_m = \frac{\exp(-\beta \Delta U_m)}{\sum_{k=0}^3 \exp(-\beta \Delta U_k)}$$
+
+Cette dynamique est réversible, s'exécute à taux d'acceptation de 100% et s'implémente très simplement. La chaîne est apériodique grâce au mouvement nul, et irréductible car les flips de murs individuels $P_{r-1}$ et $P_r$ permettent d'atteindre n'importe quelle configuration duale.
+
 
 ## 7. Encodage optimal des arêtes
 
