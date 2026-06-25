@@ -1,62 +1,62 @@
-# Rapport : dynamique de clusters geometrique sur Z pour graphes signes d'haplotypage
+# Rapport : dynamique de clusters géométrique sur $\mathbb{Z}$ pour graphes signés d'haplotypage
 
 ## 1. Objectif
 
-On considere un graphe signe pondere dont les sommets sont des reads ordonnes le long d'un chromosome :
+On considère un graphe signé pondéré dont les sommets sont des reads ordonnés le long d'un chromosome :
 
-```math
-0,1,\ldots,R-1.
-```
+$$
+0, 1, \dots, R-1
+$$
 
-Chaque read porte un spin cache :
+Chaque read porte un spin caché :
 
-```math
-\sigma_i \in \{-1,+1\}.
-```
+$$
+\sigma_i \in \{-1, +1\}
+$$
 
-Les poids d'aretes encodent des contraintes ferromagnetiques ou antiferromagnetiques :
+Les poids d'arêtes encodent des contraintes ferromagnétiques ou antiferromagnétiques :
 
-- si `W_ij > 0`, l'arete prefere `sigma_i = sigma_j` ;
-- si `W_ij < 0`, l'arete prefere `sigma_i != sigma_j` ;
-- l'intensite de la contrainte est `|W_ij|`.
+- Si $W_{ij} > 0$, l'arête préfère $\sigma_i = \sigma_j$ ;
+- Si $W_{ij} < 0$, l'arête préfère $\sigma_i \neq \sigma_j$ ;
+- L'intensité de la contrainte est $|W_{ij}|$.
 
-L'objectif est de construire une dynamique MCMC adaptee a la geometrie unidimensionnelle, plus globale qu'un Metropolis-Hastings single-spin mais avec un cout comparable lorsque le graphe est local.
+L'objectif est de construire une dynamique MCMC adaptée à la géométrie unidimensionnelle, plus globale qu'un échantillonneur Metropolis-Hastings local (single-spin) mais avec un coût de calcul comparable lorsque le graphe est local.
 
-Le mouvement propose est centre sur un read `r` choisi uniformement. A partir de ce read, on autorise :
+Le mouvement proposé est centré sur un read $r$ choisi uniformément. À partir de ce read, on s'autorise à :
 
-1. ne rien changer ;
-2. flipper seulement `r` ;
-3. flipper le prefixe `0,...,r-1` ;
-4. flipper le prefixe `0,...,r` ;
-5. flipper le prefixe `0,...,r+1`.
+1. Ne rien changer ;
+2. Flipper (inverser) seulement le spin de $r$ ;
+3. Flipper le préfixe $0, \dots, r-1$ ;
+4. Flipper le préfixe $0, \dots, r$ ;
+5. Flipper le préfixe $0, \dots, r+1$.
 
-L'idee est naturelle pour l'haplotypage : un flip de prefixe correspond a deplacer une frontiere de phase, c'est-a-dire un switch local dans la reconstruction le long de l'axe genomique.
+Cette approche est très naturelle pour l'haplotypage : le renversement d'un bloc de spins (le préfixe) correspond à déplacer une frontière de phase, modélisant ainsi de façon réaliste les switchs locaux lors de la reconstruction le long de l'axe génomique.
 
 ## 2. Mesure cible
 
-On ecrit l'energie sous la forme "aretes non satisfaites", comme dans le chapitre 11 :
+On écrit l'énergie sous la forme "arêtes non satisfaites" :
 
-```math
+$$
 U(\sigma)
 =
 \sum_{\{i,j\}: W_{ij}>0}
-|W_{ij}| \mathbf 1_{\sigma_i \ne \sigma_j}
+|W_{ij}| \mathbf{1}_{\sigma_i \neq \sigma_j}
 +
 \sum_{\{i,j\}: W_{ij}<0}
-|W_{ij}| \mathbf 1_{\sigma_i = \sigma_j}.
-```
+|W_{ij}| \mathbf{1}_{\sigma_i = \sigma_j}
+$$
 
-La posteriore cible est :
+La postérieure cible est :
 
-```math
+$$
 \mu(\sigma \mid W)
 \propto
-\exp(-U(\sigma)).
-```
+\exp\bigl(-U(\sigma)\bigr)
+$$
 
-Si `W_ij` est defini comme log-likelihood ratio pairwise,
+Si $W_{ij}$ est défini comme le rapport de log-vraisemblance (*log-likelihood ratio*) par paire :
 
-```math
+$$
 W_{ij}
 =
 \log
@@ -64,55 +64,55 @@ W_{ij}
 P(\mathrm{obs}_{ij}\mid \sigma_i\sigma_j=+1)
 }{
 P(\mathrm{obs}_{ij}\mid \sigma_i\sigma_j=-1)
-},
-```
+}
+$$
 
-alors cette energie est equivalente, a constante pres, a :
+Alors cette énergie est équivalente, à une constante additive près, à :
 
-```math
+$$
 \mu(\sigma\mid W)
 \propto
 \exp\left(
-\frac12
+\frac{1}{2}
 \sum_{\{i,j\}} W_{ij}\sigma_i\sigma_j
-\right).
-```
+\right)
+$$
 
-La convention de ce rapport est donc : `W_ij` est le poids signe naturel de l'arete, et l'energie penalise les contraintes non satisfaites par `|W_ij|`.
+La convention de ce rapport est donc : $W_{ij}$ est le poids signé naturel de l'arête, et l'énergie pénalise les contraintes non satisfaites par $|W_{ij}|$.
 
-## 3. Formule generale de variation d'energie
+## 3. Formule générale de variation d'énergie
 
-Pour une arete `e={i,j}`, posons :
+Pour une arête $e=\{i,j\}$, posons :
 
-```math
-y_{ij}=W_{ij}\sigma_i\sigma_j.
-```
+$$
+y_{ij} = W_{ij}\sigma_i\sigma_j
+$$
 
-Avec la convention ci-dessus, une arete est satisfaite si et seulement si :
+Avec la convention ci-dessus, une arête est satisfaite si et seulement si :
 
-```math
-y_{ij}>0.
-```
+$$
+y_{ij} > 0
+$$
 
-Soit `A` un ensemble de sommets que l'on flippe :
+Soit $A$ un ensemble de sommets que l'on flippe (renversement de spins) :
 
-```math
+$$
 \sigma_i'=
 \begin{cases}
 -\sigma_i, & i\in A,\\
-\sigma_i, & i\notin A.
+\sigma_i, & i\notin A
 \end{cases}
-```
+$$
 
-Seules les aretes coupees par `A` changent de satisfaction. On note :
+Seules les arêtes coupées par $A$ changent de satisfaction. On note la coupe induite par $A$ :
 
-```math
-\delta(A)=\{\{i,j\}\in E: |\{i,j\}\cap A|=1\}.
-```
+$$
+\delta(A) = \{\{i,j\}\in E: |\{i,j\}\cap A| = 1\}
+$$
 
-La variation d'energie est :
+La variation d'énergie résultant du flip est alors :
 
-```math
+$$
 \Delta U(A)
 =
 U(\sigma')-U(\sigma)
@@ -121,74 +121,74 @@ U(\sigma')-U(\sigma)
 W_{ij}\sigma_i\sigma_j
 =
 \sum_{\{i,j\}\in \delta(A)}
-y_{ij}.
-```
+y_{ij}
+$$
 
-Cette identite est la cle algorithmique. Pour evaluer un mouvement, il suffit de sommer les contributions des aretes traversees par la coupe induite par ce mouvement.
+Cette identité est la clé algorithmique. Pour évaluer un mouvement, il suffit de sommer les contributions $y_{ij}$ des arêtes traversées par la coupe $\delta(A)$ induite par ce mouvement.
 
-## 4. Variables duales sur Z
+## 4. Variables duales sur $\mathbb{Z}$
 
-La geometrie sur `Z` suggere d'introduire les variables de murs de domaine :
+La géométrie sur $\mathbb{Z}$ suggère d'introduire les variables de murs de domaine :
 
-```math
-\tau_t=\sigma_t\sigma_{t+1},
+$$
+\tau_t = \sigma_t\sigma_{t+1},
 \qquad
-t=0,\ldots,R-2.
-```
+t = 0, \dots, R-2
+$$
 
-Pour `i<j`, on a :
+Pour $i < j$, on reconstruit l'interaction par :
 
-```math
+$$
 \sigma_i\sigma_j
 =
-\prod_{t=i}^{j-1}\tau_t.
-```
+\prod_{t=i}^{j-1}\tau_t
+$$
 
-Un flip de prefixe
+Un flip de préfixe :
 
-```math
-P_q=\{0,1,\ldots,q\}
-```
+$$
+P_q = \{0, 1, \dots, q\}
+$$
 
-ne modifie qu'un seul mur :
+ne modifie qu'un seul mur dans la représentation duale :
 
-```math
-\tau_q \mapsto -\tau_q.
-```
+$$
+\tau_q \mapsto -\tau_q
+$$
 
-Un flip singleton `{r}` modifie au plus deux murs :
+Un flip singleton $\{r\}$ modifie au plus deux murs :
 
-```math
+$$
 \tau_{r-1}\mapsto -\tau_{r-1},
 \qquad
-\tau_r\mapsto -\tau_r,
-```
+\tau_r\mapsto -\tau_r
+$$
 
 en ignorant les murs hors bornes.
 
-Ainsi, dans les variables duales, les mouvements de prefixe sont locaux. Dans les variables de spins, ils sont des flips macroscopiques de blocs contigus.
+Ainsi, dans les variables duales, les mouvements de préfixe sont parfaitement locaux. Dans les variables de spins d'origine, ils correspondent à des flips macroscopiques de blocs contigus le long du chromosome.
 
-## 5. Definition propre des mouvements
+## 5. Définition propre des mouvements
 
-On definit les prefixes :
+On définit les préfixes :
 
-```math
-P_q=\{0,\ldots,q\}.
-```
+$$
+P_q = \{0, \dots, q\}
+$$
 
 Par convention :
 
-```math
-P_{-1}=\varnothing,
+$$
+P_{-1} = \varnothing,
 \qquad
-P_{R-1}=\{0,\ldots,R-1\}.
-```
+P_{R-1} = \{0, \dots, R-1\}
+$$
 
-Le flip de `P_{R-1}` est un flip global. Il ne change aucune energie pairwise car tous les produits `sigma_i sigma_j` sont invariants.
+Le flip de $P_{R-1}$ correspond à un flip global de tous les spins. Il ne change aucune énergie par paire (*pairwise*) car tous les produits $\sigma_i \sigma_j$ restent invariants.
 
-Pour un read `r`, on propose l'un des cinq mouvements :
+Pour un read $r$, on propose l'un des cinq mouvements d'inversion :
 
-```math
+$$
 \varnothing,
 \qquad
 \{r\},
@@ -197,146 +197,146 @@ P_{r-1},
 \qquad
 P_r,
 \qquad
-P_{r+1}.
-```
+P_{r+1}
+$$
 
-Aux bords, les mouvements hors domaine sont rabattus de facon explicite :
+Aux bords du domaine, les mouvements hors bornes sont rabattus de façon explicite :
 
-- `P_{-1}` est le mouvement nul ;
-- `P_R` peut etre remplace par `P_{R-1}`, donc par un flip global.
+- $P_{-1}$ est le mouvement nul ;
+- $P_R$ est remplacé par $P_{R-1}$ (le flip global).
 
-Cette convention evite les cas particuliers dangereux dans l'implementation.
+Cette convention évite l'apparition de cas particuliers non triviaux et dangereux dans l'implémentation.
 
 ## 6. Noyau Metropolis-Hastings
 
-Le noyau de proposition est independant de la configuration courante :
+Le noyau de proposition est indépendant de la configuration de spins actuelle :
 
-1. tirer `r` uniformement dans `{0,...,R-1}` ;
-2. tirer un type de mouvement dans les cinq choix ;
-3. appliquer Metropolis-Hastings avec :
+1. Tirer un read $r$ uniformément dans $\{0, \dots, R-1\}$ ;
+2. Tirer un type de mouvement parmi les cinq choix ;
+3. Appliquer le critère d'acceptation Metropolis-Hastings :
 
-```math
+$$
 \alpha(\sigma,A)
 =
-\min(1,\exp(-\Delta U(A))).
-```
+\min\bigl(1, \exp(-\Delta U(A))\bigr)
+$$
 
-Si on travaille a temperature inverse `beta`, on utilise :
+Si on travaille à température inverse $\beta$, le taux devient :
 
-```math
+$$
 \alpha_\beta(\sigma,A)
 =
-\min(1,\exp(-\beta\Delta U(A))).
-```
+\min\bigl(1, \exp(-\beta\Delta U(A))\bigr)
+$$
 
-La proposition est symetrique parce que chaque mouvement est une involution et que sa probabilite ne depend pas de l'etat. Donc le noyau est reversible par rapport a :
+La proposition est symétrique parce que chaque mouvement est une involution et que sa probabilité de sélection ne dépend pas de l'état du système. Le noyau est donc réversible par rapport à la mesure :
 
-```math
-\mu_\beta(\sigma)\propto \exp(-\beta U(\sigma)).
-```
+$$
+\mu_\beta(\sigma) \propto \exp\bigl(-\beta U(\sigma)\bigr)
+$$
 
-La chaine est aperiodique grace au mouvement nul. Elle est irreductible car les flips singletons `{r}` sont disponibles pour tous les sommets et engendrent tout l'hypercube `{-1,+1}^R`.
+La chaîne est apériodique grâce au mouvement nul. Elle est irréductible car les flips singletons $\{r\}$ sont toujours disponibles pour tous les sommets et engendrent l'ensemble de l'hypercube de configuration $\{-1, +1\}^R$.
 
-## 7. Encodage optimal des aretes
+## 7. Encodage optimal des arêtes
 
-Pour chaque arete `e={i,j}`, on stocke les indices ordonnes :
+Pour chaque arête $e=\{i,j\}$, on stocke ses attributs de manière orientée :
 
-```text
+```python
 left[e]  = min(i,j)
 right[e] = max(i,j)
 W[e]     = W_ij
 y[e]     = W_ij * sigma_i * sigma_j
 ```
 
-On pre-calcule ensuite deux familles de listes.
+On pré-calcule ensuite deux familles de listes d'arêtes.
 
 ### 7.1 Listes incidentes
 
-```text
-incident[r] = { e : e est incidente au read r }.
-```
+$$
+\text{incident}[r] = \{ e \in E : e \text{ est incidente au read } r \}
+$$
 
-Elles servent au flip singleton `{r}` :
+Elles servent à évaluer le flip singleton $\{r\}$ :
 
-```math
+$$
 \Delta U(\{r\})
 =
-\sum_{e\in incident[r]} y[e].
-```
+\sum_{e \in \text{incident}[r]} y[e]
+$$
 
-Si le mouvement est accepte, toutes les aretes incidentes changent de signe :
+Si le mouvement est accepté, les variables de toutes les arêtes incidentes sont mises à jour :
 
-```math
-y[e]\leftarrow -y[e],
+$$
+y[e] \leftarrow -y[e],
 \qquad
-e\in incident[r].
-```
+e \in \text{incident}[r]
+$$
 
 ### 7.2 Listes de coupe
 
-Pour une coupe entre `q` et `q+1`, on definit :
+Pour une coupe située entre le read $q$ et $q+1$, on définit :
 
-```text
-cross[q] = { e : left[e] <= q < right[e] }.
-```
+$$
+\text{cross}[q] = \{ e \in E : \text{left}[e] \le q < \text{right}[e] \}
+$$
 
-Elles servent au flip de prefixe `P_q` :
+Elles servent à évaluer le flip de préfixe $P_q$ :
 
-```math
+$$
 \Delta U(P_q)
 =
-\sum_{e\in cross[q]} y[e].
-```
+\sum_{e \in \text{cross}[q]} y[e]
+$$
 
-Si le mouvement est accepte :
+Si le mouvement est accepté :
 
-```math
-y[e]\leftarrow -y[e],
+$$
+y[e] \leftarrow -y[e],
 \qquad
-e\in cross[q].
-```
+e \in \text{cross}[q]
+$$
 
-Pour `q=-1` et `q=R-1`, la coupe est vide : le mouvement est respectivement nul ou global.
+Pour $q = -1$ et $q = R-1$, la coupe est vide (le coût est nul, ce qui est cohérent avec le mouvement nul ou global).
 
-## 8. Complexite
+## 8. Complexité
 
-Le cout exact d'un pas est :
+Le coût exact d'une itération de la dynamique est :
 
-```math
-O(|incident[r]|)
-```
+$$
+\mathcal{O}(|\text{incident}[r]|)
+$$
 
 pour un flip singleton, et :
 
-```math
-O(|cross[q]|)
-```
+$$
+\mathcal{O}(|\text{cross}[q]|)
+$$
 
-pour un flip de prefixe.
+pour un flip de préfixe.
 
-On obtient donc un cout `O(1)` si l'on impose une hypothese de congestion bornee :
+On obtient donc un coût en temps de calcul en $\mathcal{O}(1)$ si l'on impose une hypothèse de congestion bornée :
 
-```math
-\sup_r |incident[r]| = O(1),
+$$
+\sup_r |\text{incident}[r]| = \mathcal{O}(1),
 \qquad
-\sup_q |cross[q]| = O(1).
-```
+\sup_q |\text{cross}[q]| = \mathcal{O}(1)
+$$
 
-Cette hypothese est realiste pour un graphe d'haplotypage local, avec couverture controlee et longueurs de reads bornees. Elle n'est pas vraie en pire cas :
+Cette hypothèse est réaliste pour un graphe d'haplotypage local, avec une couverture contrôlée et des longueurs de reads bornées. Elle n'est pas garantie en pire cas si l'on observe :
 
-- reads ultra-longs ;
-- region de couverture extreme ;
-- graphe trop dense ;
-- edges ajoutees a longue portee sans controle.
+- Des reads ultra-longs connectant des régions éloignées ;
+- Des zones de sur-couverture extrême ;
+- Un graphe trop dense en arêtes ;
+- Des liaisons ajoutées à longue portée sans contrôle de distance.
 
-Il faut donc distinguer deux enonces :
+Il convient de distinguer deux énoncés :
 
-1. algorithme exact en `O(|incident|)` ou `O(|cross|)` ;
-2. algorithme attendu en `O(1)` sous hypothese biologique/geometrique de congestion locale bornee.
+1. L'algorithme exact s'exécute en $\mathcal{O}(|\text{incident}|)$ ou $\mathcal{O}(|\text{cross}|)$ ;
+2. L'algorithme attendu s'exécute en $\mathcal{O}(1)$ sous hypothèse biologique et géométrique de congestion locale bornée.
 
-En pratique, le rapport automatique du benchmark devrait mesurer :
+En pratique, le rapport statistique de benchmark d'instance doit mesurer :
 
-```text
+```yaml
 max_degree
 mean_degree
 max_cut_congestion
@@ -344,183 +344,171 @@ mean_cut_congestion
 quantiles_cut_congestion
 ```
 
-Ces quantites disent immediatement si la dynamique sera effectivement quasi constante.
+Ces indicateurs permettent de valider si la dynamique s'exécutera effectivement à coût constant.
 
 ## 9. Construction efficace de `cross`
 
-La construction naive consiste a ajouter chaque arete `e=(i,j)` dans tous les `cross[q]` pour :
+La construction naïve consiste à ajouter chaque arête $e=(i,j)$ dans toutes les listes de coupe $\text{cross}[q]$ pour :
 
-```math
-i\le q < j.
-```
+$$
+i \le q < j
+$$
 
-Son cout memoire est :
+Son coût mémoire (en nombre d'entrées stockées) est :
 
-```math
-\sum_{e=(i,j)} (j-i).
-```
+$$
+\sum_{e=(i,j)} (j-i)
+$$
 
-Ce cout est acceptable si le graphe est local dans l'ordre des reads. Sinon, il peut devenir trop grand.
+Ce coût est acceptable si le graphe est local dans l'ordre des reads. Sinon, il peut devenir prohibitif.
 
-Plan recommande :
+Plan recommandé :
 
-1. commencer avec la representation explicite `cross[q]`, car elle donne le meilleur cout par pas ;
-2. mesurer `sum_span = sum_e(right[e]-left[e])` ;
-3. si `sum_span` est trop grand, basculer vers une representation alternative `O(log R + |cross[q]|)` par structures d'intervalles, en acceptant que le pas ne soit plus strictement `O(1)`.
+1. Commencer avec la représentation explicite $\text{cross}[q]$, car elle donne le meilleur coût opérationnel par pas ;
+2. Mesurer la somme des étendues : $\text{sum\_span} = \sum_e (\text{right}[e] - \text{left}[e])$ ;
+3. Si $\text{sum\_span}$ est trop grand, basculer vers une représentation alternative en $\mathcal{O}(\log R + |\text{cross}[q]|)$ par structures d'intervalles (comme un arbre d'intervalles), en acceptant que le pas ne soit plus strictement en $\mathcal{O}(1)$.
 
-Dans un premier prototype mathematique, la representation explicite est la plus saine : elle rend les preuves, les tests et les invariants tres simples.
+Dans un premier prototype mathématique, la représentation explicite est la plus saine : elle rend les preuves, les tests et les invariants très simples à valider.
 
-## 10. Mise a jour des spins
+## 10. Mise à jour des spins
 
-On a deux options.
+Deux options sont envisageables pour maintenir l'état des spins.
 
 ### Option A : maintenir les spins explicitement
 
-Pour un flip singleton, on fait :
+Pour un flip singleton, on effectue la mise à jour directe :
 
-```text
+```python
 sigma[r] *= -1
 ```
 
-Pour un flip de prefixe, mettre a jour tous les spins du prefixe couterait `O(R)`, ce qui est a eviter.
+Pour un flip de préfixe, mettre à jour tous les spins du préfixe individuellement coûterait $\mathcal{O}(R)$, ce qui est incompatible avec un coût de pas constant.
 
-### Option B : representation paresseuse par murs
+### Option B : représentation paresseuse par murs
 
-On maintient plutot les variables `tau` et une jauge globale `sigma_0`.
+On maintient plutôt les variables duales $\tau$ et une jauge globale $\sigma_0$.
 
-Un flip de prefixe `P_q` change seulement `tau[q]`. Un flip global change seulement `sigma_0`.
+Un flip de préfixe $P_q$ change seulement $\tau_q \leftarrow -\tau_q$. Un flip global change seulement $\sigma_0 \leftarrow -\sigma_0$.
 
-Pour reconstruire un spin individuel, il faut :
+Pour reconstruire un spin individuel à la demande, il faut calculer :
 
-```math
+$$
 \sigma_i
 =
 \sigma_0
-\prod_{t=0}^{i-1}\tau_t.
-```
+\prod_{t=0}^{i-1}\tau_t
+$$
 
-Si l'on a besoin de requetes frequentes de spins individuels, on peut utiliser un Fenwick tree de parites pour obtenir `sigma_i` en `O(log R)`. Mais pour la dynamique d'energie, il n'est pas necessaire de reconstruire les spins : les valeurs `y[e]` suffisent.
+Si l'on a besoin de requêtes fréquentes de spins individuels, on peut utiliser un arbre de Fenwick (*Fenwick tree*) de parités pour obtenir n'importe quel $\sigma_i$ en $\mathcal{O}(\log R)$. Cependant, pour le calcul de l'énergie de la dynamique, il n'est pas nécessaire de reconstruire les spins : les valeurs $y[e]$ suffisent.
 
 La recommandation est donc :
 
-- maintenir `y[e]` pour l'energie ;
-- maintenir une representation paresseuse des spins seulement pour les sorties, diagnostics et correlations.
+- Maintenir $y[e]$ pour l'évaluation rapide de l'énergie ;
+- Maintenir une représentation paresseuse des spins uniquement pour les sorties, les diagnostics et le calcul des corrélations.
 
-## 11. Estimation des correlations spin-spin k-hop
+## 11. Estimation des corrélations spin-spin $k$-hop
 
-On veut estimer :
+On souhaite estimer l'espérance des corrélations :
 
-```math
-C_{ij}
-=
-\mathbb E_\mu[\sigma_i\sigma_j]
-```
+$$
+C_{ij} = \mathbb{E}_\mu[\sigma_i\sigma_j]
+$$
 
-pour toutes les paires a distance graphe au plus `k`, par exemple `k=4`.
+pour toutes les paires à distance de graphe au plus $k$, par exemple $k=4$.
 
-On definit :
+On définit l'ensemble des paires suivies :
 
-```math
-\mathcal P_k
-=
-\{(i,j): i<j,\ d_G(i,j)\le k\}.
-```
+$$
+\mathcal{P}_k = \{(i,j) : i < j,\ d_G(i,j) \le k\}
+$$
 
-Il ne faut pas stocker une matrice dense `R x R` si `R` est grand. On stocke une matrice sparse indexee par les paires de `P_k`.
+Pour éviter d'utiliser une matrice dense $R \times R$, on stocke les valeurs de manière creuse (*sparse*) sous forme de dictionnaire ou de tableau plat indexé par les éléments de $\mathcal{P}_k$.
 
-Pour chaque paire `p=(i,j)`, on maintient :
+Pour chaque paire $p=(i,j)$, on maintient :
 
-```text
+```python
 corr_value[p] = sigma_i * sigma_j
 corr_sum[p]
 last_time[p]
 ```
 
-L'estimateur empirique apres `T` pas est :
+L'estimateur empirique après $T$ pas de la chaîne est :
 
-```math
-\widehat C_{ij}
+$$
+\widehat{C}_{ij}
 =
-\frac1T
+\frac{1}{T}
 \sum_{t=0}^{T-1}
-\sigma_i^{(t)}\sigma_j^{(t)}.
-```
+\sigma_i^{(t)}\sigma_j^{(t)}
+$$
 
-## 12. Accumulation evenementielle des correlations
+## 12. Accumulation événementielle des corrélations
 
-Mettre a jour toutes les paires a chaque iteration couterait trop cher. On utilise une accumulation par evenements.
+Mettre à jour toutes les paires suivies à chaque itération de la dynamique serait trop coûteux. On utilise à la place une accumulation événementielle.
 
-Pour chaque paire `p`, `corr_value[p]` reste constant entre deux flips qui separent ses deux extremites. Si `p` change au temps `t`, on ajoute d'abord sa contribution depuis son dernier changement :
+La variable `corr_value[p]` reste constante entre deux flips acceptés qui séparent les deux extrémités de la paire $p$. Si la valeur de $p$ change au temps $t$, on ajoute d'abord sa contribution accumulée depuis son dernier changement :
 
-```text
+```python
 corr_sum[p] += corr_value[p] * (t - last_time[p])
 corr_value[p] *= -1
 last_time[p] = t
 ```
 
-A la fin de la chaine, on flush toutes les paires :
+À la fin de l'échantillonnage, on effectue un flush final pour toutes les paires suivies :
 
-```text
+```python
 corr_sum[p] += corr_value[p] * (T - last_time[p])
 C[p] = corr_sum[p] / T
 ```
 
-Les rejets et les mouvements nuls ne modifient aucune paire. Ils sont automatiquement pris en compte par la duree `t - last_time[p]`.
+Les rejets et les mouvements nuls ne modifient pas l'état des paires. Ils sont automatiquement pris en compte par la durée $t - \text{last\_time}[p]$ lors de la prochaine modification.
 
-## 13. Listes de paires affectees
+## 13. Listes de paires affectées
 
-On pre-calcule l'analogue des listes d'aretes.
+On pré-calcule l'analogue des listes d'arêtes pour les paires de corrélation.
 
 Pour les flips singletons :
 
-```text
-pair_incident[r] = { p=(i,j) in P_k : r=i ou r=j }.
-```
+$$
+\text{pair\_incident}[r] = \{ p = (i,j) \in \mathcal{P}_k : r=i \text{ ou } r=j \}
+$$
 
-Pour les flips de prefixe :
+Pour les flips de préfixe :
 
-```text
-pair_cross[q] = { p=(i,j) in P_k : i <= q < j }.
-```
+$$
+\text{pair\_cross}[q] = \{ p = (i,j) \in \mathcal{P}_k : i \le q < j \}
+$$
 
 Alors :
 
-- si `{r}` est accepte, seules les paires de `pair_incident[r]` changent de signe ;
-- si `P_q` est accepte, seules les paires de `pair_cross[q]` changent de signe.
+- Si $\{r\}$ est accepté, seules les paires de $\text{pair\_incident}[r]$ changent de signe ;
+- Si $P_q$ est accepté, seules les paires de $\text{pair\_cross}[q]$ changent de signe.
 
-Le cout de mise a jour des correlations est donc :
+Le coût de mise à jour des corrélations est donc proportionnel à la taille des listes affectées :
 
-```math
-O(|pair\_incident[r]|)
-```
+$$
+\mathcal{O}(|\text{pair\_incident}[r]|) \quad \text{ou} \quad \mathcal{O}(|\text{pair\_cross}[q]|)
+$$
 
-ou :
+Sous hypothèse de degré borné et pour $k$ fixé, la taille totale de $\mathcal{P}_k$ est en $\mathcal{O}(R)$, et ces mises à jour restent locales en moyenne.
 
-```math
-O(|pair\_cross[q]|).
-```
+## 14. Construction de $\mathcal{P}_k$
 
-Sous degre borne et `k` fixe, la taille totale de `P_k` est `O(R)`, et ces mises a jour restent locales en moyenne.
+On construit $\mathcal{P}_k$ par une recherche en largeur (BFS) tronquée depuis chaque sommet :
 
-## 14. Construction de `P_k`
+1. Pour chaque sommet $i$, lancer une BFS jusqu'à la profondeur $k$ dans le graphe non orienté ;
+2. Pour chaque sommet atteint $j > i$, ajouter la paire $(i,j)$ à $\mathcal{P}_k$ ;
+3. Stocker la distance de graphe $d_G(i,j)$ si l'on souhaite stratifier les corrélations par distance.
 
-On construit `P_k` par BFS tronque depuis chaque sommet :
+La complexité globale de construction est de :
 
-1. pour chaque sommet `i`, lancer une BFS jusqu'a profondeur `k` dans le graphe non oriente ;
-2. pour chaque sommet atteint `j>i`, ajouter `(i,j)` a `P_k` ;
-3. stocker la distance `d_G(i,j)` si l'on veut stratifier les correlations par distance.
+$$
+\mathcal{O}\left(R \cdot d^k\right)
+$$
 
-Complexite :
+où $d$ est le degré moyen du graphe. Pour $k=4$, cette complexité n'est acceptable que si le graphe est creux. Il est donc recommandé d'enregistrer et de surveiller :
 
-```math
-O\left(R \cdot d^k\right)
-```
-
-si le degre typique est `d`.
-
-Pour `k=4`, c'est acceptable seulement si le graphe est sparse. Il faut donc mesurer :
-
-```text
+```yaml
 number_tracked_pairs
 tracked_pairs_per_node
 tracked_pairs_cross_congestion
@@ -528,27 +516,27 @@ tracked_pairs_cross_congestion
 
 ## 15. Rapport entre cette dynamique et Swendsen-Wang
 
-Cette dynamique n'est pas Swendsen-Wang au sens strict :
+Cette dynamique n'est pas une dynamique de Swendsen-Wang au sens strict :
 
-- elle ne gele pas aleatoirement des aretes satisfaites ;
-- elle ne recolorie pas des composantes gelees ;
-- elle ne produit pas directement un couplage de percolation comme dans le chapitre 11.
+- Elle ne gèle pas aléatoirement des arêtes satisfaites ;
+- Elle ne recolorie pas des composantes gelées ;
+- Elle ne produit pas directement un couplage de percolation (comme dans la formulation classique de Swendsen-Wang standard).
 
-Elle est cependant "cluster-like" dans les spins, car elle propose des flips de blocs contigus potentiellement grands.
+Elle est cependant apparentée à une dynamique de type "cluster" pour les spins, car elle propose des flips de blocs contigus potentiellement grands.
 
-Son interpretation naturelle est :
+Son interprétation naturelle est :
 
-- Metropolis-Hastings local dans les variables de murs `tau` ;
-- dynamique de switchs de phase sur `Z` ;
-- proposition geometrique adaptee aux erreurs de phase en haplotypage.
+- Un échantillonneur de Metropolis-Hastings local dans les variables de murs $\tau$ ;
+- Une dynamique de switchs de phase sur $\mathbb{Z}$ ;
+- Une proposition géométrique bien adaptée aux erreurs de phase (switchs de phase) rencontrées en haplotypage.
 
-Cette distinction est importante. Les preuves de stationnarite sont celles de Metropolis-Hastings, pas celles d'Edwards-Sokal ou de Swendsen-Wang.
+Cette distinction est importante. Les preuves de stationnarité reposent uniquement sur celles de Metropolis-Hastings, et non sur des arguments de couplage géométrique d'Edwards-Sokal ou de Swendsen-Wang.
 
 ## 16. Diagnostics indispensables
 
-Pour valider la dynamique, il faut suivre separement :
+Pour valider la dynamique, il faut suivre séparément les indicateurs suivants :
 
-```text
+```yaml
 acceptance_singleton
 acceptance_prefix_r_minus_1
 acceptance_prefix_r
@@ -560,9 +548,9 @@ autocorrelation_domain_walls
 effective_sample_size_correlations
 ```
 
-Il faut aussi profiler :
+Il faut également profiler les statistiques de congestion :
 
-```text
+```yaml
 mean_incident_size
 max_incident_size
 mean_cross_size
@@ -571,93 +559,91 @@ mean_pair_cross_size
 max_pair_cross_size
 ```
 
-Ces grandeurs disent si le regime observe est vraiment quasi `O(1)`.
+Ces grandeurs confirment si le régime observé s'approche effectivement du comportement théorique en $\mathcal{O}(1)$.
 
-## 17. Tests mathematiques minimaux
+## 17. Tests mathématiques minimaux
 
-### Test 1 : variation d'energie
+### Test 1 : variation d'énergie
 
-Sur des petits graphes aleatoires, comparer :
+Sur de petits graphes aléatoires, comparer :
 
-```text
+```python
 DeltaU_fast(A)
 ```
 
-avec :
+avec le calcul direct :
 
-```text
+```python
 U(flip_A(sigma)) - U(sigma)
 ```
 
-calcule brutalement.
+évalué de façon brute. Ce test doit couvrir :
 
-Ce test doit couvrir :
+- Les flips singletons ;
+- Les préfixes internes ;
+- Le préfixe vide ;
+- Le flip global ;
+- Les poids positifs et négatifs ;
+- Les arêtes à longue portée.
 
-- flips singletons ;
-- prefixes internes ;
-- prefixe vide ;
-- flip global ;
-- poids positifs et negatifs ;
-- aretes de longue portee.
+### Test 2 : invariance globale (symétrie de jauge)
 
-### Test 2 : invariance globale
+Vérifier :
 
-Verifier :
-
-```math
-U(\sigma)=U(-\sigma).
-```
+$$
+U(\sigma) = U(-\sigma)
+$$
 
 et :
 
-```math
-y_{ij}(\sigma)=y_{ij}(-\sigma).
-```
+$$
+y_{ij}(\sigma) = y_{ij}(-\sigma)
+$$
 
-### Test 3 : stationnarite sur petit R
+### Test 3 : stationnarité sur petit $R$
 
-Pour `R <= 16`, enumerer les `2^R` configurations et calculer exactement :
+Pour $R \le 16$, énumérer l'ensemble des $2^R$ configurations possibles de spins, calculer exactement la mesure de Boltzmann :
 
-```math
+$$
 \mu(\sigma)
 =
-\frac{\exp(-U(\sigma))}{Z}.
-```
+\frac{\exp\bigl(-U(\sigma)\bigr)}{\mathcal{Z}}
+$$
 
-Puis comparer les frequences MCMC aux probabilites exactes.
+et comparer les fréquences empiriques obtenues par MCMC aux probabilités exactes.
 
-### Test 4 : detailed balance
+### Test 4 : balance détaillée (Detailed Balance)
 
-Pour des paires de configurations reliees par un mouvement autorise, verifier numeriquement :
+Pour des paires de configurations reliées par un mouvement autorisé, vérifier numériquement la relation :
 
-```math
-\mu(\sigma)K(\sigma,\sigma')
+$$
+\mu(\sigma)K(\sigma, \sigma')
 =
-\mu(\sigma')K(\sigma',\sigma).
-```
+\mu(\sigma')K(\sigma', \sigma)
+$$
 
-### Test 5 : correlations
+### Test 5 : corrélations
 
-Comparer l'accumulation evenementielle avec une accumulation naive sur toutes les paires suivies a chaque iteration.
+Comparer l'accumulation événementielle avec une accumulation naïve effectuant le produit direct sur toutes les paires suivies à chaque itération.
 
-## 18. Plan de route d'implementation
+## 18. Plan de route d'implémentation
 
-### Phase 1 : specification mathematique
+### Phase 1 : spécification mathématique
 
 Formaliser dans la documentation du projet :
 
-- energie cible ;
-- convention des poids ;
-- mouvements autorises ;
-- formule de variation d'energie ;
-- preuve de reversibilite MH ;
-- hypothese de congestion locale pour le `O(1)`.
+- L'énergie cible ;
+- La convention des poids ;
+- Les mouvements autorisés ;
+- La formule de variation d'énergie ;
+- La preuve de réversibilité Metropolis-Hastings (MH) ;
+- L'hypothèse de congestion locale pour le coût en $\mathcal{O}(1)$.
 
 ### Phase 2 : indexation du graphe
 
-Implementer un module d'indexation produisant :
+Implémenter un module d'indexation produisant :
 
-```text
+```python
 edges.left
 edges.right
 edges.weight
@@ -668,11 +654,11 @@ cross
 
 Ajouter les statistiques de congestion dans le rapport d'instance.
 
-### Phase 3 : sampler MH geometrique
+### Phase 3 : échantillonneur MH géométrique
 
-Implementer :
+Implémenter les routines suivantes :
 
-```text
+```python
 step()
 propose_move(r)
 delta_energy(move)
@@ -680,18 +666,18 @@ accept_or_reject(move)
 apply_move(move)
 ```
 
-L'implementation doit traiter explicitement :
+L'implémentation doit traiter explicitement :
 
-- prefixe vide ;
-- prefixe global ;
-- doublons de mouvements aux bords ;
-- temperature `beta`.
+- Le préfixe vide ;
+- Le préfixe global ;
+- Les doublons de mouvements aux bords ;
+- Le paramètre de température inverse $\beta$.
 
-### Phase 4 : correlations k-hop
+### Phase 4 : corrélations $k$-hop
 
-Implementer :
+Implémenter :
 
-```text
+```python
 build_k_hop_pairs(k)
 pair_incident
 pair_cross
@@ -699,9 +685,9 @@ event_update_pairs(move, time)
 finalize_correlations(T)
 ```
 
-Sorties recommandees :
+Sorties recommandées :
 
-```text
+```yaml
 correlations_khop.tsv
 correlations_khop.npz
 correlation_summary.json
@@ -709,20 +695,20 @@ correlation_summary.json
 
 ### Phase 5 : tests exacts
 
-Avant tout benchmark biologique, passer les tests sur petits graphes enumerables.
+Avant tout benchmark biologique, passer les tests unitaires sur de petits graphes énumérables.
 
-Priorite :
+Priorités de validation :
 
 1. `DeltaU_fast == DeltaU_bruteforce` ;
-2. detailed balance ;
-3. correlations event-driven vs naive ;
-4. invariance par flip global.
+2. Balance détaillée (*detailed balance*) ;
+3. Corrélations événementielles vs naïves ;
+4. Invariance par flip global (symétrie de jauge).
 
-### Phase 6 : benchmarks de complexite
+### Phase 6 : benchmarks de complexité
 
-Sur les instances HAPLO-BENCH, mesurer :
+Sur les instances issues de HAPLO-BENCH, mesurer :
 
-```text
+```yaml
 time_per_step
 time_per_accepted_step
 mean_cross_size
@@ -732,109 +718,100 @@ max_pair_cross_size
 acceptance_by_move_type
 ```
 
-L'objectif est de verifier empiriquement que le cout est controle par la geometrie 1D.
+L'objectif est de vérifier empiriquement que le coût d'une mise à jour est contrôlé par la géométrie 1D.
 
-### Phase 7 : comparaison avec dynamiques existantes
+### Phase 7 : comparaison avec les dynamiques existantes
 
 Comparer au minimum :
 
-- Metropolis single-spin ;
-- prefix-MH geometrique ;
-- Swendsen-Wang signe, si disponible ;
-- eventuellement une dynamique hybride alternant prefix-MH et single-spin.
+- L'échantillonneur de Metropolis classique (single-spin) ;
+- La dynamique de préfixe-MH géométrique ;
+- La dynamique de Swendsen-Wang signée (si disponible) ;
+- Éventuellement, une dynamique hybride alternant les propositions de préfixes et les propositions de single-spin.
 
-Metriques :
+Métriques de comparaison :
 
-```text
+```yaml
 energy_trace
 autocorrelation_energy
 autocorrelation_switches
-ESS per second
-quality of spin-spin correlations
+ESS_per_second
+quality_of_spin_spin_correlations
 ```
 
 ## 19. Points de vigilance
 
-### 19.1 Le `O(1)` depend de la geometrie effective
+### 19.1 Le $\mathcal{O}(1)$ dépend de la géométrie effective
 
-Le graphe est plonge dans `Z`, mais cela ne suffit pas. Il faut que les aretes soient locales dans l'ordre choisi. Si des reads ultra-longs connectent beaucoup de regions, `cross[q]` peut devenir grand.
+Le graphe est plongé dans $\mathbb{Z}$, mais cela ne suffit pas. Il faut que les arêtes soient locales dans l'ordre choisi. Si des reads ultra-longs connectent beaucoup de régions disjointes, $\text{cross}[q]$ peut croître de façon importante.
 
-Conclusion : le `O(1)` est une propriete du couple `(graphe, ordre)`, pas seulement de l'algorithme.
+**Conclusion** : le coût en $\mathcal{O}(1)$ est une propriété conjointe du couple `(graphe, ordre)`, et pas seulement de l'algorithme lui-même.
 
 ### 19.2 Ordre des reads
 
-L'ordre doit etre choisi soigneusement :
+L'ordre d'indexation des reads le long de l'axe linéaire doit être choisi soigneusement :
 
-- par position centrale ;
-- ou par debut de read ;
-- ou par coordonnee de molecule si disponible.
+- Par position centrale de la lecture ;
+- Ou par début de lecture ;
+- Ou par coordonnée de molécule physique si disponible.
 
-Le meilleur ordre est celui qui minimise la congestion des coupes :
+Le meilleur ordre est celui qui minimise la congestion maximale des coupes :
 
-```math
-\max_q |cross[q]|.
-```
+$$
+\max_q |\text{cross}[q]|
+$$
 
-Il faut donc rapporter cette congestion pour plusieurs ordres possibles si necessaire.
+Il convient donc de mesurer et rapporter cette congestion pour plusieurs ordres possibles si nécessaire.
 
-### 19.3 Jauge globale
+### 19.3 Symétrie de jauge globale
 
-La posteriore est invariante par flip global :
+La postérieure est invariante par flip global (symétrie $\mathbb{Z}_2$) :
 
-```math
-\sigma \mapsto -\sigma.
-```
+$$
+\sigma \mapsto -\sigma
+$$
 
-Les correlations `sigma_i sigma_j` sont invariantes par cette jauge, donc elles sont bien definies. En revanche, les moyennes `E[sigma_i]` ne le sont pas sans fixation de jauge.
+Les corrélations $\sigma_i \sigma_j$ sont invariantes sous cette symétrie et sont donc bien définies. En revanche, les espérances individuelles $\mathbb{E}[\sigma_i]$ sont nulles par symétrie à moins de fixer la jauge.
 
-### 19.4 Paires k-hop
+### 19.4 Paires $k$-hop
 
-La notion `k-hop` depend du graphe utilise :
+La notion de $k$-hop dépend du squelette de graphe utilisé :
 
-- graphe complet des aretes informatives ;
-- graphe filtre par poids ;
-- graphe local ;
-- graphe apres seuillage.
+- Le graphe complet des arêtes informatives ;
+- Le graphe filtré par seuil de poids ;
+- Le graphe de connectivité locale.
 
-Il faut fixer cette convention dans les sorties pour que les correlations soient interpretables.
+Il faut fixer rigoureusement cette convention dans les métadonnées de sortie pour rendre les corrélations comparables et interprétables.
 
 ### 19.5 Frustration
 
-Dans un graphe frustre, les flips de prefixes peuvent etre tres efficaces pour bouger des blocs, mais ils ne suppriment pas les barrieres d'energie. Il faudra verifier si la dynamique melange bien dans les regions fortement frustrees.
+Dans un graphe fortement frustré, les flips de préfixes peuvent être très efficaces pour déplacer des blocs entiers, mais ils ne suppriment pas les barrières d'énergie locales induites par la frustration. Il convient de vérifier si la dynamique se mélange bien dans les régions de forte frustration.
 
 ## 20. Conclusion
 
-La dynamique proposee est mathematiquement propre si elle est presentee comme une dynamique Metropolis-Hastings geometrique sur `Z`.
+La dynamique proposée est mathématiquement rigoureuse si elle est formulée comme une dynamique Metropolis-Hastings géométrique sur $\mathbb{Z}$.
 
-Son point fort est la representation duale :
+Son point fort réside dans la représentation duale des variables de mur :
 
-```math
-\tau_t=\sigma_t\sigma_{t+1}.
-```
+$$
+\tau_t = \sigma_t\sigma_{t+1}
+$$
 
-Dans cette representation, les flips de prefixes deviennent locaux, ce qui correspond bien aux erreurs de phase en haplotypage.
+Dans cette représentation, les flips de préfixes deviennent locaux, ce qui correspond physiquement aux erreurs de phase (switchs) rencontrées en haplotypage.
 
-L'encodage naturel du graphe repose sur deux listes :
+L'encodage du graphe repose naturellement sur deux familles de listes :
 
-```text
-incident[r]
-cross[q]
-```
+* `incident[r]` (les arêtes incidentes à chaque read $r$) ;
+* `cross[q]` (les arêtes intersectées par la coupe $q$).
 
-Elles donnent les variations d'energie exactes et les mises a jour exactes des poids courants `y[e]`.
+Elles permettent de calculer en temps optimal la variation d'énergie $\Delta U$ et de mettre à jour efficacement les poids d'arêtes $y[e]$.
 
-La complexite d'un pas est :
+La complexité d'une itération de la dynamique est en :
 
-```math
-O(|incident[r]|)
-```
+$$
+\mathcal{O}(|\text{incident}[r]|) \quad \text{ou} \quad \mathcal{O}(|\text{cross}[q]|)
+$$
 
-ou :
+Elle devient effectivement en $\mathcal{O}(1)$ sous l'hypothèse de congestion locale bornée, caractéristique géométrique qu'il faut systématiquement mesurer et documenter pour chaque jeu de données.
 
-```math
-O(|cross[q]|).
-```
-
-Elle devient effectivement `O(1)` sous hypothese de congestion locale bornee, hypothese qu'il faut mesurer et documenter dans chaque instance.
-
-Enfin, les correlations spin-spin a distance `k-hop` doivent etre stockees sparse et mises a jour par accumulation evenementielle. Cette strategie donne exactement la moyenne empirique MCMC tout en evitant de parcourir toutes les paires a chaque iteration.
+Enfin, l'estimation des corrélations spin-spin à distance $k$-hop est implémentée de façon creuse (*sparse*) et mise à jour via une accumulation événementielle. Cette stratégie garantit l'obtention exacte des moyennes temporelles MCMC tout en évitant le parcours global coûteux de toutes les paires à chaque itération.
