@@ -51,6 +51,7 @@ instance/
         haplotypes.tsv
         read_truth.tsv
         variants.tsv
+        read_assignments.tsv
     bio/
         reference.fa
         reads.fq
@@ -62,7 +63,6 @@ instance/
     graph/
         nodes.tsv
         edges.tsv
-        triangles.tsv
         graph.json
         graph.npz
     report/
@@ -77,6 +77,7 @@ Les fichiers dans `truth/` ne doivent pas être utilisés par les algorithmes.
 * `haplotypes.tsv` : séquences ou encodages des deux haplotypes.
 * `read_truth.tsv` : haplotype d’origine de chaque lecture.
 * `variants.tsv` : positions hétérozygotes vraies et allèles associés.
+* `read_assignments.tsv` : vecteur ligne contenant les affectations des reads aux communautés (entiers de 0 à K-1, séparés par des tabulations).
 
 ### Fichiers biologiques
 
@@ -181,6 +182,14 @@ Deux chromosomes sont recommandés pour les premières expériences.
 
 ```yaml
 chromosome_presets:
+  chr1:
+    assembly: GRCh38.p14
+    L: 248956422
+
+  chr2:
+    assembly: GRCh38.p14
+    L: 242193529
+
   chr20:
     assembly: GRCh38.p14
     L: 64444167
@@ -778,42 +787,7 @@ $$
 
 Cette forme est compatible avec les dynamiques de type Swendsen-Wang signé.
 
----
-
-## 15. Triangles et interactions d’ordre supérieur
-
-Les triangles sont optionnels.
-
-```yaml
-higher_order:
-  enable_triangles: true
-  triangle_rule: edge_clique   # edge_clique | shared_variant | shared_region
-```
-
-Règles possibles :
-
-1. `edge_clique` : les trois arêtes ($(i,j)$, $(j,k)$, $(i,k)$) existent.
-2. `shared_variant` : les trois lectures partagent au moins un variant hétérozygote.
-3. `shared_region` : les trois lectures ont une intersection géométrique commune.
-
-Pour un triangle $(t={i,j,k})$, on définit
-
-$$
-F_{ijk} =
-\text{sign}(W_{ij}W_{jk}W_{ik}).
-$$
-
-Le triangle est frustré si
-
-$$
-F_{ijk}=-1.
-$$
-
-Un graphe sans bruit issu de deux haplotypes est équilibré : le produit des signes sur tout cycle est positif. Les triangles frustrés mesurent donc directement les contradictions induites par le bruit.
-
----
-
-## 16. Formats du graphe
+## 15. Formats du graphe
 
 ### `nodes.tsv`
 
@@ -848,13 +822,6 @@ Colonnes recommandées :
 * `weight` : $W_{ij}$ ;
 * `sign` : $\text{sign}(W_{ij})$.
 
-### `triangles.tsv`
-
-```tsv
-i   j   k   rule          frustration  weight_ij  weight_jk  weight_ik
-0   4   9   edge_clique   -1           2.1        -1.7       3.0
-```
-
 ### `graph.json`
 
 ```json
@@ -883,7 +850,7 @@ i   j   k   rule          frustration  weight_ij  weight_jk  weight_ik
 
 ---
 
-## 17. Formats biologiques
+## 16. Formats biologiques
 
 ### FASTA
 
@@ -927,13 +894,13 @@ Le mode principal du graphe suppose que ces variants sont connus.
 
 ---
 
-## 18. Presets de séquençage
+## 17. Presets de séquençage
 
 Les presets fixent des paramètres effectifs. Ils ne prétendent pas simuler toute la chimie du séquençage, parce qu’apparemment nous souhaitons encore terminer ce benchmark avant la fin du siècle.
 
 ---
 
-### 18.1 `theory_fixed`
+### 17.1 `theory_fixed`
 
 Profil minimal, parfaitement aligné avec le modèle mathématique.
 
@@ -971,7 +938,7 @@ graph:
 
 ---
 
-### 18.2 `illumina_pe150`
+### 17.2 `illumina_pe150`
 
 Profil paired-end court-read.
 
@@ -1027,7 +994,7 @@ $$
 
 ---
 
-### 18.3 `pacbio_hifi`
+### 17.3 `pacbio_hifi`
 
 Profil long-read précis.
 
@@ -1076,7 +1043,7 @@ sites hétérozygotes.
 
 ---
 
-### 18.4 `ont_q20`
+### 17.4 `ont_q20`
 
 Profil long-read ONT simplex Q20+.
 
@@ -1120,7 +1087,7 @@ Le seuil `min_shared_variants: 2` est recommandé pour éviter qu’un unique va
 
 ---
 
-### 18.5 `ont_duplex`
+### 17.5 `ont_duplex`
 
 Profil ONT duplex plus précis.
 
@@ -1162,7 +1129,7 @@ graph:
 
 ---
 
-### 18.6 `ont_ultralong`
+### 17.6 `ont_ultralong`
 
 Profil ONT ultra-long.
 
@@ -1206,7 +1173,7 @@ Ce preset sert surtout à tester l’effet des longues connexions sur la percola
 
 ---
 
-### 18.7 `hybrid_illumina_pacbio`
+### 17.7 `hybrid_illumina_pacbio`
 
 Profil hybride short reads précis + PacBio HiFi.
 
@@ -1237,7 +1204,7 @@ graph:
 
 ---
 
-### 18.8 `hybrid_illumina_ont`
+### 17.8 `hybrid_illumina_ont`
 
 Profil hybride short reads précis + ONT bruité.
 
@@ -1268,9 +1235,9 @@ graph:
 
 ---
 
-## 19. Modes de graphe
+## 18. Modes de graphe
 
-### 19.1 Tous les overlaps informatifs
+### 18.1 Tous les overlaps informatifs
 
 ```yaml
 graph:
@@ -1280,7 +1247,7 @@ graph:
 
 Toutes les paires partageant au moins un site hétérozygote sont reliées.
 
-### 19.2 Filtrage par nombre de variants
+### 18.2 Filtrage par nombre de variants
 
 ```yaml
 graph:
@@ -1294,7 +1261,7 @@ $$
 m_{ij}\ge m_{\min}.
 $$
 
-### 19.3 Filtrage par poids
+### 18.3 Filtrage par poids
 
 ```yaml
 graph:
@@ -1308,7 +1275,7 @@ $$
 |W_{ij}|\ge w_{\min}.
 $$
 
-### 19.4 Graphe local
+### 18.4 Graphe local
 
 ```yaml
 graph:
@@ -1318,7 +1285,7 @@ graph:
 
 On conserve seulement les paires dont les centres sont proches.
 
-### 19.5 Graphe mixte local + longue portée
+### 18.5 Graphe mixte local + longue portée
 
 ```yaml
 graph:
@@ -1332,7 +1299,7 @@ Ce mode est utile pour les profils hybrides et paired-end.
 
 ---
 
-## 20. Rapport automatique
+## 19. Rapport automatique
 
 Chaque instance doit produire un rapport court.
 
@@ -1352,14 +1319,13 @@ summary:
   positive_edges_fraction: 0.51
   negative_edges_fraction: 0.49
   mean_abs_weight: 5.4
-  frustrated_triangles_fraction: 0.08
 ```
 
 Le rapport doit permettre de détecter immédiatement une instance absurde.
 
 ---
 
-## 21. Commandes attendues
+## 20. Commandes attendues
 
 Générer une instance :
 
@@ -1387,7 +1353,7 @@ haplo-bench export-bio data/pacbio_chr22_001
 
 ---
 
-## 22. Instance minimale recommandée
+## 21. Instance minimale recommandée
 
 ```yaml
 preset: theory_fixed
@@ -1418,16 +1384,11 @@ graph:
   min_shared_variants: 1
   edge_rule: likelihood_ratio
 
-higher_order:
-  enable_triangles: true
-  triangle_rule: edge_clique
-```
-
 Cette instance est volontairement plus facile qu’un short-read Illumina réaliste : elle sert à déboguer les algorithmes.
 
 ---
 
-## 23. Principe final
+## 22. Principe final
 
 L’utilisateur choisit un preset :
 
