@@ -753,7 +753,7 @@ $$
 \propto
 \exp
 \left(
-\sum_{\{i,j\}\in E}
+\frac{1}{2} \sum_{\{i,j\}\in E}
 W_{ij}\sigma_i\sigma_j
 \right).
 $$
