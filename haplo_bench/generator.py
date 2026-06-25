@@ -42,9 +42,6 @@ def generate(config_path, out_dir, seed=None):
     
     # Step 1: Generate heterozygous variant positions using geometric spacing (Bernoulli spacing)
     print(f"🧬 Génération des sites de variants hétérozygotes (densité={density})...")
-    positions = []
-    curr = 0
-    # To run super fast, we generate spacings analytically
     spacings = np.random.geometric(density, size=int(L * density * 1.5))
     cum_sums = np.cumsum(spacings)
     positions = cum_sums[cum_sums < L].tolist()
@@ -165,6 +162,12 @@ def generate(config_path, out_dir, seed=None):
     log_ratio = np.log(q / (1 - q))
     
     num_edges = 0
+    sum_overlap_len = 0.0
+    sum_shared_vars = 0.0
+    sum_abs_weight = 0.0
+    positive_count = 0
+    negative_count = 0
+    
     with open(edges_file_path, "w") as f:
         f.write("source\ttarget\toverlap_length\tshared_het_sites\tconcordances\tdifferences\tweight\tsign\n")
         
@@ -198,14 +201,17 @@ def generate(config_path, out_dir, seed=None):
                     sign = 1 if weight >= 0 else -1
                     
                     f.write(f"{i}\t{j}\t{overlap_len}\t{shared_vars}\t{concordances}\t{differences}\t{weight:.2f}\t{sign}\n")
-                    num_edges += 1
                     
-                    # Cap edges to prevent oversized files and run fast (e.g. max 200,000 edges)
-                    if num_edges >= 200000:
-                        break
-            if num_edges >= 200000:
-                break
-                
+                    # Compute running metrics
+                    num_edges += 1
+                    sum_overlap_len += overlap_len
+                    sum_shared_vars += shared_vars
+                    sum_abs_weight += abs(weight)
+                    if sign == 1:
+                        positive_count += 1
+                    else:
+                        negative_count += 1
+                        
     # Write graph/graph.json
     graph_info = {
         "model": "haplo-bench",
@@ -234,7 +240,13 @@ def generate(config_path, out_dir, seed=None):
     with open(os.path.join(out_dir, "graph", "graph.npz"), "wb") as f:
         f.write(b"DUMMY NPZ DATA")
         
-    # Calculate summary metrics
+    # Calculate summary metrics dynamically
+    mean_overlap_len = (sum_overlap_len / num_edges) if num_edges > 0 else 0.0
+    mean_shared_vars = (sum_shared_vars / num_edges) if num_edges > 0 else 0.0
+    mean_abs_w = (sum_abs_weight / num_edges) if num_edges > 0 else 0.0
+    pos_frac = (positive_count / num_edges) if num_edges > 0 else 0.0
+    neg_frac = (negative_count / num_edges) if num_edges > 0 else 0.0
+    
     summary_metrics = {
         "preset": preset,
         "chromosome": chromosome,
@@ -245,11 +257,11 @@ def generate(config_path, out_dir, seed=None):
         "n_variants": num_variants,
         "n_reads": num_reads,
         "n_edges": num_edges,
-        "mean_overlap_length": 9000.0,
-        "mean_shared_variants_per_edge": 6.5,
-        "positive_edges_fraction": 0.51,
-        "negative_edges_fraction": 0.49,
-        "mean_abs_weight": 5.4
+        "mean_overlap_length": float(f"{mean_overlap_len:.2f}"),
+        "mean_shared_variants_per_edge": float(f"{mean_shared_vars:.2f}"),
+        "positive_edges_fraction": float(f"{pos_frac:.4f}"),
+        "negative_edges_fraction": float(f"{neg_frac:.4f}"),
+        "mean_abs_weight": float(f"{mean_abs_w:.4f}")
     }
     
     with open(os.path.join(out_dir, "report", "summary.json"), "w") as f:
