@@ -11,7 +11,7 @@ $$
 Chaque read porte un spin caché :
 
 $$
-\sigma_i \in \{-1, +1\}
+\sigma_i \in \lbrace -1, +1\rbrace
 $$
 
 Les poids d'arêtes encodent des contraintes ferromagnétiques ou antiferromagnétiques :
@@ -28,7 +28,7 @@ L'objectif est de construire une dynamique MCMC de type **Glauber / Heat-Bath** 
 On écrit l'énergie sous la forme "arêtes non satisfaites" :
 
 $$
-U(\sigma) = \sum_{\{i,j\}: W_{ij}>0} |W_{ij}| \mathbf{1}_{\sigma_i \neq \sigma_j} + \sum_{\{i,j\}: W_{ij}<0} |W_{ij}| \mathbf{1}_{\sigma_i = \sigma_j}
+U(\sigma) = \sum_{\lbrace i,j\rbrace: W_{ij}>0} |W_{ij}| \mathbf{1}_{\sigma_i \neq \sigma_j} + \sum_{\lbrace i,j\rbrace: W_{ij}<0} |W_{ij}| \mathbf{1}_{\sigma_i = \sigma_j}
 $$
 
 La postérieure cible est :
@@ -50,13 +50,13 @@ $$
 Seules les arêtes coupées par $A$ changent de satisfaction. On note la coupe induite par $A$ :
 
 $$
-\delta(A) = \{\{i,j\}\in E: |\{i,j\}\cap A| = 1\}
+\delta(A) = \lbrace \lbrace i,j\rbrace\in E: |\lbrace i,j\rbrace\cap A| = 1\rbrace
 $$
 
 La variation d'énergie résultant du flip est alors :
 
 $$
-\Delta U(A) = U(\sigma')-U(\sigma) = \sum_{\{i,j\}\in \delta(A)} W_{ij}\sigma_i\sigma_j
+\Delta U(A) = U(\sigma')-U(\sigma) = \sum_{\lbrace i,j\rbrace\in \delta(A)} W_{ij}\sigma_i\sigma_j
 $$
 
 Pour évaluer un mouvement, il suffit de sommer les contributions signées $W_{ij}\sigma_i\sigma_j$ des arêtes traversées par la coupe $\delta(A)$ induite par ce mouvement.
@@ -77,7 +77,7 @@ $$
 \sigma_i\sigma_j = \prod_{t=i}^{j-1}\tau_t
 $$
 
-Un flip de préfixe $P_q = \{0, 1, \dots, q\}$ ne modifie qu'un seul mur dans la représentation duale :
+Un flip de préfixe $P_q = \lbrace 0, 1, \dots, q\rbrace$ ne modifie qu'un seul mur dans la représentation duale :
 
 $$
 \tau_q \mapsto -\tau_q
@@ -91,7 +91,7 @@ Ainsi, dans les variables duales, les mouvements de préfixe sont parfaitement l
 
 Pour un read $r$, on définit les 5 mouvements candidats d'inversion :
 1.  $A_0 = \varnothing$ (mouvement nul, ne fait rien)
-2.  $A_1 = \{r\}$ (flip singleton)
+2.  $A_1 = \lbrace r\rbrace$ (flip singleton)
 3.  $A_2 = P_{r-1}$ (flip du préfixe s'arrêtant avant $r$)
 4.  $A_3 = P_r$ (flip du préfixe incluant $r$)
 5.  $A_4 = P_{r+1}$ (flip du préfixe incluant $r+1$)
@@ -104,7 +104,7 @@ Aux bords du domaine, les mouvements hors bornes sont rabattus :
 
 ## 6. Noyau de transition : Glauber avec correction de Metropolis-Hastings
 
-Pour un read $r$ choisi uniformément dans $\{0, \dots, R-1\}$, on évalue les variations d'énergie $\Delta U_m$ pour les 5 mouvements candidats $m \in \{0, \dots, 4\}$.
+Pour un read $r$ choisi uniformément dans $\lbrace 0, \dots, R-1\rbrace$, on évalue les variations d'énergie $\Delta U_m$ pour les 5 mouvements candidats $m \in \lbrace 0, \dots, 4\rbrace$.
 
 On souhaite choisir un mouvement $m$ avec une probabilité de type Glauber / Heat-Bath :
 
@@ -116,7 +116,7 @@ $$
 
 #### Non-fermeture du voisinage et correction de Metropolis-Hastings
 
-Le jeu de mouvements $\mathcal{M} = \{\varnothing, \{r\}, P_{r-1}, P_r, P_{r+1}\}$ n'est pas fermé par composition (par exemple, la composition de $P_{r-1}$ et $P_{r+1}$ n'appartient pas à $\mathcal{M}$). Les voisinages des états de départ et d'arrivée ne sont donc pas symétriques, ce qui brise la balance détaillée si l'on applique le choix Glauber directement.
+Le jeu de mouvements $\mathcal{M} = \lbrace \varnothing, \lbrace r\rbrace, P_{r-1}, P_r, P_{r+1}\rbrace$ n'est pas fermé par composition (par exemple, la composition de $P_{r-1}$ et $P_{r+1}$ n'appartient pas à $\mathcal{M}$). Les voisinages des états de départ et d'arrivée ne sont donc pas symétriques, ce qui brise la balance détaillée si l'on applique le choix Glauber directement.
 
 Pour restaurer rigoureusement la réversibilité de la chaîne par rapport à la distribution cible, on applique un filtre d'acceptation de Metropolis-Hastings. Si un mouvement $m > 0$ est sélectionné (menant à l'état $\sigma'$), on l'accepte avec la probabilité :
 
@@ -130,11 +130,11 @@ Où $\Delta U_k(\sigma')$ désigne les variations d'énergie des 5 mouvements é
 
 ## 7. Arbres de Fenwick pour la Longue Portée
 
-Puisque les reads et les arêtes s'étendent sur de longues distances (long reads), nous n'utilisons aucune distinction entre arêtes courtes et longues. L'ensemble des interactions du graphe est traité sous forme de **longue portée**. Nous n'allouons pas de tableau physique pour stocker les signes d'interaction $y_e = W_e \sigma_i \sigma_j$ en mémoire. À la place, nous maintenons l'état des spins duals $\tau_t \in \{-1, +1\}$ de manière paresseuse et dynamique grâce à un **arbre de Fenwick** (Binary Indexed Tree) modulo 2.
+Puisque les reads et les arêtes s'étendent sur de longues distances (long reads), nous n'utilisons aucune distinction entre arêtes courtes et longues. L'ensemble des interactions du graphe est traité sous forme de **longue portée**. Nous n'allouons pas de tableau physique pour stocker les signes d'interaction $y_e = W_e \sigma_i \sigma_j$ en mémoire. À la place, nous maintenons l'état des spins duals $\tau_t \in \lbrace -1, +1\rbrace$ de manière paresseuse et dynamique grâce à un **arbre de Fenwick** (Binary Indexed Tree) modulo 2.
 
 ### 7.1 Principe de l'arbre modulo 2
 
-Nous convertissons les variables de mur $\tau_t \in \{-1, +1\}$ en bits $b_t \in \{0, 1\}$ via le codage :
+Nous convertissons les variables de mur $\tau_t \in \lbrace -1, +1\rbrace$ en bits $b_t \in \lbrace 0, 1\rbrace$ via le codage :
 
 $$
 b_t = \frac{1 - \tau_t}{2} \quad \left(b_t = 0 \iff \tau_t = +1, \quad b_t = 1 \iff \tau_t = -1\right)
@@ -232,16 +232,16 @@ graph TD
 
 À chaque pas de temps $t$ :
 
-1.  **Sélection** : Choisir un read $r$ uniformément dans $\{0, \dots, R-1\}$.
+1.  **Sélection** : Choisir un read $r$ uniformément dans $\lbrace 0, \dots, R-1\rbrace$.
 2.  **Calcul des énergies de proposition (état $\sigma$)** :
-    Pour chaque mouvement $m \in \{1..4\}$ (qui correspond à une coupe $q_m$) :
+    Pour chaque mouvement $m \in \lbrace 1..4\rbrace$ (qui correspond à une coupe $q_m$) :
     
 $$
 \Delta U_m(\sigma) = \sum_{e \in \text{cross}[q_m]} W_e \cdot (-1)^{\text{query}(e.right-1) \oplus \text{query}(e.left-1)}
 $$
 
-    Le mouvement nul $m=0$ a une énergie $\Delta U_0(\sigma) = 0$. La décomposition de singleton $\{r\} = P_{r-1} \triangle P_r$ est évaluée par la somme des deux coupes de préfixes correspondantes.
-3.  **Sélection du mouvement** : Échantillonner $m \in \{0..4\}$ selon les probabilités Glauber $p_m \propto \exp(-\beta \Delta U_m(\sigma))$.
+    Le mouvement nul $m=0$ a une énergie $\Delta U_0(\sigma) = 0$. La décomposition de singleton $\lbrace r\rbrace = P_{r-1} \triangle P_r$ est évaluée par la somme des deux coupes de préfixes correspondantes.
+3.  **Sélection du mouvement** : Échantillonner $m \in \lbrace 0..4\rbrace$ selon les probabilités Glauber $p_m \propto \exp(-\beta \Delta U_m(\sigma))$.
 4.  **Cas d'arrêt rapide** : Si $m = 0$ (mouvement nul), le pas s'arrête immédiatement.
 5.  **Application temporaire** : Si $m > 0$, appliquer le flip (opération XOR sur l'index du mur correspondant dans l'arbre de Fenwick). L'état devient $\sigma'$.
 6.  **Calcul des énergies de retour (état $\sigma'$)** :
@@ -256,7 +256,7 @@ $$
 
 ## 9. Encodage optimal des arêtes et des listes de coupe
 
-Pour chaque arête $e=\{i,j\}$, on stocke ses attributs de manière orientée :
+Pour chaque arête $e=\lbrace i,j\rbrace$, on stocke ses attributs de manière orientée :
 ```python
 left[e]  = min(i,j)
 right[e] = max(i,j)
@@ -266,7 +266,7 @@ W[e]     = W_ij
 On pré-calcule et stocke la structure de coupe pour chaque position :
 
 $$
-\text{cross}[q] = \{ e \in E : \text{left}[e] \le q < \text{right}[e] \}
+\text{cross}[q] = \lbrace  e \in E : \text{left}[e] \le q < \text{right}[e] \rbrace
 $$
 
 Cette structure permet d'accéder instantanément à la liste des arêtes traversées par une coupe $q$. La complexité d'évaluation d'une coupe est de $\mathcal{O}(|\text{cross}[q]| \log R)$.
@@ -314,7 +314,7 @@ C[p] = corr_sum[p] / T
 Les paires affectées par une coupe $q$ sont pré-calculées dans la liste :
 
 $$
-\mathcal{P}_{\text{cross}}(q) = \{ p = (i,j) \in \mathcal{P}_k : i \le q < j \}
+\mathcal{P}_{\text{cross}}(q) = \lbrace  p = (i,j) \in \mathcal{P}_k : i \le q < j \rbrace
 $$
 
 ---
@@ -323,7 +323,7 @@ $$
 
 ### Phase 1 : Structures de Données et Indexation
 1.  Construire la liste des arêtes $E$ avec `left`, `right` et `weight`.
-2.  Construire les listes de coupe `cross[q]` pour chaque mur $q \in \{0, \dots, R-2\}$.
+2.  Construire les listes de coupe `cross[q]` pour chaque mur $q \in \lbrace 0, \dots, R-2\rbrace$.
 3.  Initialiser l'arbre de Fenwick de taille $R-1$ avec des bits à $0$ (représentant $\tau_t = 1$ partout, soit des spins identiques $\sigma_i = \sigma_0$ pour tout $i$).
 
 ### Phase 2 : Noyau de transition Glauber-MH
