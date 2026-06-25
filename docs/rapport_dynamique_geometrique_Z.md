@@ -252,6 +252,8 @@ On pré-calcule ensuite deux familles de listes d'arêtes.
 
 ### 7.1 Listes incidentes
 
+*(Note : Si l'on utilise la décomposition des singletons décrite à la section 11.4, les listes incidentes `incident[r]` ne sont plus nécessaires à l'implémentation, réduisant ainsi la complexité structurelle).*
+
 ```math
 \text{incident}[r] = \{ e \in E : e \text{ est incidente au read } r \}
 ```
@@ -322,17 +324,7 @@ On obtient donc un coût en temps de calcul en $\mathcal{O}(1)$ si l'on impose u
 \sup_q |\text{cross}[q]| = \mathcal{O}(1)
 ```
 
-Cette hypothèse est réaliste pour un graphe d'haplotypage local, avec une couverture contrôlée et des longueurs de reads bornées. Elle n'est pas garantie en pire cas si l'on observe :
-
-- Des reads ultra-longs connectant des régions éloignées ;
-- Des zones de sur-couverture extrême ;
-- Un graphe trop dense en arêtes ;
-- Des liaisons ajoutées à longue portée sans contrôle de distance.
-
-Il convient de distinguer deux énoncés :
-
-1. L'algorithme exact s'exécute en $\mathcal{O}(|\text{incident}|)$ ou $\mathcal{O}(|\text{cross}|)$ ;
-2. L'algorithme attendu s'exécute en $\mathcal{O}(1)$ sous hypothèse biologique et géométrique de congestion locale bornée.
+Cette hypothèse est réaliste pour un graphe d'haplotypage local, avec une couverture contrôlée et des longueurs de reads bornées. Elle n'est pas garantie en pire cas si l'on observe des reads à longue portée (comme discuté en section 11).
 
 En pratique, le rapport statistique de benchmark d'instance doit mesurer les variables suivantes :
 
@@ -406,7 +398,73 @@ La recommandation est donc :
 - Maintenir `y[e]` pour l'évaluation rapide de l'énergie ;
 - Maintenir une représentation paresseuse des spins uniquement pour les sorties, les diagnostics et le calcul des corrélations.
 
-## 11. Estimation des corrélations spin-spin $k$-hop
+## 11. Structure efficace pour reads à longue portée
+
+Pour les graphes contenant des reads à longue portée, maintenir physiquement la mise à jour des poids d'arêtes $y_e$ pour toutes les coupes traversées devient inefficace. Une arête longue intersecte un grand nombre de coupes, provoquant une congestion mémoire et algorithmique.
+
+Pour résoudre ce problème, on abandonne la mise à jour physique des variables $y_e$ au profit d'une évaluation à la demande s'appuyant sur une représentation duale paresseuse.
+
+### 11.1 Représentation paresseuse et arbre de Fenwick
+
+Pour une arête $e=(i,j)$ avec $i < j$, la valeur de l'interaction dépend uniquement des murs de domaine inclus dans son intervalle :
+
+```math
+y_e(\tau) = W_e \prod_{t=i}^{j-1} \tau_t
+```
+
+Afin de pouvoir requêter rapidement cette valeur, on maintient l'état des variables duales $\tau \in \{0, 1\}$ (où $0$ représente le signe $+$ et $1$ le signe $-$) dans un **arbre de Fenwick** (*Fenwick tree*) opérant sous l'addition modulo 2 (groupe $\mathbb{Z}_2$).
+
+* **Mise à jour d'un mur** : Un flip de préfixe $P_q$ modifie un seul élément $\tau_q \leftarrow 1 - \tau_q$ dans l'arbre de Fenwick en temps $\mathcal{O}(\log R)$.
+* **Requête sur une arête** : Le calcul du signe de $y_e$ s'effectue en interrogeant la somme cumulée modulo 2 de l'intervalle $[i, j-1]$ en temps $\mathcal{O}(\log R)$.
+
+### 11.2 Séparation des arêtes courtes et longues
+
+Pour optimiser le temps de calcul, on partitionne l'ensemble des arêtes $E$ en deux catégories :
+* `short_edges` : Les arêtes locales (courte portée). Pour ces arêtes, on conserve la structure explicite `cross_short[q]` et les valeurs $y_e$ sont maintenues physiquement en mémoire avec un coût d'accès en $\mathcal{O}(1)$.
+* `long_edges` : Les arêtes de longue portée. Pour ces arêtes, on enregistre uniquement leurs identifiants dans les listes de coupe `cross_long[q]`, sans jamais mettre à jour leur valeur physique lors des transitions.
+
+### 11.3 Critère de Metropolis-Hastings à acceptation retardée (Delayed Acceptance)
+
+Afin d'éviter d'évaluer le produit de parité sur l'arbre de Fenwick pour toutes les arêtes longues à chaque pas de temps, on applique un schéma de **Metropolis-Hastings à acceptation retardée** (*delayed acceptance*). Ce schéma en deux étapes est mathématiquement exact et préserve rigoureusement la loi cible :
+
+1. **Première étape (filtre court)** : On calcule la variation d'énergie uniquement sur la partie locale :
+   ```math
+   \Delta U_{\mathrm{short}} = \sum_{e \in \text{cross\_short}[q]} y_e
+   ```
+   On évalue le premier critère d'acceptation :
+   ```math
+   \alpha_1 = \min\bigl(1, e^{-\Delta U_{\mathrm{short}}}\bigr)
+   ```
+   Si la transition est rejetée à cette étape, le mouvement est immédiatement abandonné. On ne calcule jamais les contributions des arêtes longues.
+
+2. **Seconde étape (filtre long)** : Si et seulement si la première étape est acceptée, on calcule la contribution des arêtes longues en évaluant leur signe courant à l'aide de l'arbre de Fenwick :
+   ```math
+   \Delta U_{\mathrm{long}} = \sum_{e \in \text{cross\_long}[q]} W_e \prod_{t \in e} \tau_t
+   ```
+   On évalue le second critère d'acceptation :
+   ```math
+   \alpha_2 = \min\bigl(1, e^{-\Delta U_{\mathrm{long}}}\bigr)
+   ```
+   Si ce second test réussit, le mouvement est définitivement validé et le mur $\tau_q$ est mis à jour dans le Fenwick.
+
+### 11.4 Décomposition des singletons en deux flips de préfixes
+
+L'inclusion des flips singletons $\{r\}$ peut également tirer profit de cette représentation. Au lieu de maintenir la structure `incident[r]` pour évaluer les spins individuels, on décompose le flip d'un singleton en la différence symétrique de deux flips de préfixes :
+
+```math
+\{r\} = P_{r-1} \triangle P_r
+```
+
+Le calcul de la variation d'énergie $\Delta U(\{r\})$ s'effectue ainsi :
+1. Calculer la variation $\Delta_1 = \Delta U(P_{r-1})$ sur la configuration actuelle.
+2. Inverser temporairement la variable duale $\tau_{r-1}$ dans l'arbre de Fenwick.
+3. Calculer la variation $\Delta_2 = \Delta U(P_r)$ sur cette configuration intermédiaire.
+4. La variation totale d'énergie du singleton est la somme $\Delta U(\{r\}) = \Delta_1 + \Delta_2$.
+5. Si le mouvement est rejeté (par le filtre court ou long), on restaure simplement la variable $\tau_{r-1}$ dans le Fenwick. S'il est accepté, on applique également l'inversion de la variable $\tau_r$.
+
+Cette décomposition unifie le traitement des mouvements et supprime le besoin de stocker ou parcourir les listes d'arêtes incidentes `incident[r]`, ce qui est particulièrement avantageux pour les reads très connectés.
+
+## 12. Estimation des corrélations spin-spin $k$-hop
 
 On souhaite estimer l'espérance des corrélations :
 
@@ -442,7 +500,7 @@ L'estimateur empirique après $T$ pas de la chaîne est :
 \sigma_i^{(t)}\sigma_j^{(t)}
 ```
 
-## 12. Accumulation événementielle des corrélations
+## 13. Accumulation événementielle des corrélations
 
 Mettre à jour toutes les paires suivies à chaque itération de la dynamique serait trop coûteux. On utilise à la place une accumulation événementielle.
 
@@ -463,7 +521,7 @@ C[p] = corr_sum[p] / T
 
 Les rejets et les mouvements nuls ne modifient pas l'état des paires. Ils sont automatiquement pris en compte par la durée $t - \text{last\_time}[p]$ lors de la prochaine modification, où la variable `last_time` désigne le dernier pas de temps mis à jour.
 
-## 13. Listes de paires affectées
+## 14. Listes de paires affectées
 
 On pré-calcule l'analogue des listes d'arêtes pour les paires de corrélation.
 
@@ -492,7 +550,7 @@ Le coût de mise à jour des corrélations est donc proportionnel à la taille d
 
 Sous hypothèse de degré borné et pour $k$ fixé, la taille totale de $\mathcal{P}_k$ est en $\mathcal{O}(R)$, et ces mises à jour restent locales en moyenne.
 
-## 14. Construction de $\mathcal{P}_k$
+## 15. Construction de $\mathcal{P}_k$
 
 On construit $\mathcal{P}_k$ par une recherche en largeur (BFS) tronquée depuis chaque sommet :
 
@@ -514,7 +572,7 @@ tracked_pairs_per_node
 tracked_pairs_cross_congestion
 ```
 
-## 15. Rapport entre cette dynamique et Swendsen-Wang
+## 16. Rapport entre cette dynamique et Swendsen-Wang
 
 Cette dynamique n'est pas une dynamique de Swendsen-Wang au sens strict :
 
@@ -532,7 +590,7 @@ Son interprétation naturelle est :
 
 Cette distinction est importante. Les preuves de stationnarité reposent uniquement sur celles de Metropolis-Hastings, et non sur des arguments de couplage géométrique d'Edwards-Sokal ou de Swendsen-Wang.
 
-## 16. Diagnostics indispensables
+## 17. Diagnostics indispensables
 
 Pour valider la dynamique, il faut suivre séparément les indicateurs de taux d'acceptation et de statistiques suivants :
 
@@ -561,7 +619,7 @@ max_pair_cross_size
 
 Ces grandeurs confirment si le régime observé s'approche effectivement du comportement théorique en $\mathcal{O}(1)$.
 
-## 17. Tests mathématiques minimaux
+## 18. Tests mathématiques minimaux
 
 ### Test 1 : variation d'énergie
 
@@ -614,7 +672,7 @@ Pour des paires de configurations reliées par un mouvement autorisé, vérifier
 
 Comparer l'accumulation événementielle avec une accumulation naïve effectuant le produit direct sur toutes les paires suivies à chaque itération.
 
-## 18. Plan de route d'implémentation
+## 19. Plan de route d'implémentation
 
 ### Phase 1 : spécification mathématique
 
@@ -640,16 +698,20 @@ incident
 cross
 ```
 
-Ajouter les statistiques de congestion dans le rapport d'instance.
+Séparer le stockage en `short_edges` et `long_edges`. Ajouter les statistiques de congestion dans le rapport d'instance.
 
-### Phase 3 : échantillonneur MH géométrique
+### Phase 3 : échantillonneur MH géométrique avec arbre de Fenwick
 
-Implémenter les routines suivantes :
-
+Implémenter :
+- L'arbre de Fenwick modulo 2 pour l'état $\tau$.
+- Les fonctions d'évaluation rapide des arêtes courtes ($\mathcal{O}(1)$) et des arêtes longues ($\mathcal{O}(\log R)$ via requête de parité).
+- La structure à acceptation retardée (*delayed acceptance*).
+- Les routines :
 ```python
 step()
 propose_move(r)
-delta_energy(move)
+delta_energy_short(move)
+delta_energy_long(move)
 accept_or_reject(move)
 apply_move(move)
 ```
@@ -685,7 +747,7 @@ Avant tout benchmark biologique, passer les tests unitaires sur de petits graphe
 
 Priorités de validation :
 
-1. Les résultats du test rapide et brut de variation d'énergie concordent ;
+1. Les résultats du test rapide et brut de variation d'énergie (incluant le delayed acceptance et la décomposition de singleton) concordent ;
 2. Balance détaillée (*detailed balance*) ;
 3. Corrélations événementielles vs naïves ;
 4. Invariance par flip global (symétrie de jauge).
@@ -721,15 +783,15 @@ Métriques de comparaison :
 - ESS par seconde : `ESS_per_second`
 - Qualité des corrélations : `quality_of_spin_spin_correlations`
 
-## 19. Points de vigilance
+## 20. Points de vigilance
 
-### 19.1 Le $\mathcal{O}(1)$ dépend de la géométrie effective
+### 20.1 Le $\mathcal{O}(1)$ dépend de la géométrie effective
 
-Le graphe est plongé dans $\mathbb{Z}$, mais cela ne suffit pas. Il faut que les arêtes soient locales dans l'ordre choisi. Si des reads ultra-longs connectent beaucoup de régions disjointes, la liste `cross[q]` peut croître de façon importante.
+Le graphe est plongé dans $\mathbb{Z}$, mais cela ne suffit pas. Il faut que les arêtes soient locales dans l'ordre choisi. Si des reads ultra-longs connectent beaucoup de régions disjointes, la liste `cross[q]` peut croître de façon importante. Le delayed acceptance atténue fortement ce coût en évitant d'évaluer les arêtes longues sur les pas rejetés au premier filtre.
 
-**Conclusion** : le coût en $\mathcal{O}(1)$ est une propriété conjointe du couple `(graphe, ordre)`, et pas seulement de l'algorithme lui-même.
+**Conclusion** : le coût de calcul reste lié au couple `(graphe, ordre)`, et pas seulement à l'algorithme lui-même.
 
-### 19.2 Ordre des reads
+### 20.2 Ordre des reads
 
 L'ordre d'indexation des reads le long de l'axe linéaire doit être choisi soigneusement :
 
@@ -745,7 +807,7 @@ Le meilleur ordre est celui qui minimise la congestion maximale des coupes :
 
 Il convient donc de mesurer et rapporter cette congestion pour plusieurs ordres possibles si nécessaire.
 
-### 19.3 Symétrie de jauge globale
+### 20.3 Symétrie de jauge globale
 
 La postérieure est invariante par flip global (symétrie $\mathbb{Z}_2$) :
 
@@ -755,7 +817,7 @@ La postérieure est invariante par flip global (symétrie $\mathbb{Z}_2$) :
 
 Les corrélations $\sigma_i \sigma_j$ sont invariantes sous cette symétrie et sont donc bien définies. En revanche, les espérances individuelles $\mathbb{E}[\sigma_i]$ sont nulles par symétrie à moins de fixer la jauge.
 
-### 19.4 Paires $k$-hop
+### 20.4 Paires $k$-hop
 
 La notion de $k$-hop dépend du squelette de graphe utilisé :
 
@@ -765,11 +827,11 @@ La notion de $k$-hop dépend du squelette de graphe utilisé :
 
 Il faut fixer rigoureusement cette convention dans les métadonnées de sortie pour rendre les corrélations comparables et interprétables.
 
-### 19.5 Frustration
+### 20.5 Frustration
 
 Dans un graphe fortement frustré, les flips de préfixes peuvent être très efficaces pour déplacer des blocs entiers, mais ils ne suppriment pas les barrières d'énergie locales induites par la frustration. Il convient de vérifier si la dynamique se mélange bien dans les régions de forte frustration.
 
-## 20. Conclusion
+## 21. Conclusion
 
 La dynamique proposée est mathématiquement rigoureuse si elle est formulée comme une dynamique Metropolis-Hastings géométrique sur $\mathbb{Z}$.
 
@@ -781,19 +843,6 @@ Son point fort réside dans la représentation duale des variables de mur :
 
 Dans cette représentation, les flips de préfixes deviennent locaux, ce qui correspond physiquement aux erreurs de phase (switchs) rencontrées en haplotypage.
 
-L'encodage du graphe repose naturellement sur deux familles de listes :
-
-* `incident[r]` (les arêtes incidentes à chaque read $r$) ;
-* `cross[q]` (les arêtes intersectées par la coupe $q$).
-
-Elles permettent de calculer en temps optimal la variation d'énergie $\Delta U$ et de mettre à jour efficacement les poids d'arêtes `y[e]`.
-
-La complexité d'une itération de la dynamique est en :
-
-```math
-\mathcal{O}(|\text{incident}[r]|) \quad \text{ou} \quad \mathcal{O}(|\text{cross}[q]|)
-```
-
-Elle devient effectivement en $\mathcal{O}(1)$ sous l'hypothèse de congestion locale bornée, caractéristique géométrique qu'il faut systématiquement mesurer et documenter pour chaque jeu de données.
+L'encodage du graphe repose naturellement sur la distinction entre arêtes courtes (maintenues physiquement) et arêtes longues (évaluées de manière paresseuse à l'aide d'un arbre de Fenwick modulo 2). Cette distinction, combinée à un critère de Metropolis-Hastings à acceptation retardée, permet d'éviter l'évaluation systématique des contraintes longue portée sur les mouvements rejetés par l'énergie locale.
 
 Enfin, l'estimation des corrélations spin-spin à distance $k$-hop est implémentée de façon creuse (*sparse*) et mise à jour via une accumulation événementielle. Cette stratégie garantit l'obtention exacte des moyennes temporelles MCMC tout en évitant le parcours global coûteux de toutes les paires à chaque itération.
