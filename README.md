@@ -751,14 +751,10 @@ Le graphe signé pondéré définit une postérieure de type Ising signé :
 $$
 \mu(\sigma\mid W)
 \propto
-\exp
-\left(
-\frac{1}{2} \sum_{\{i,j\}\in E}
-W_{ij}\sigma_i\sigma_j
-\right).
+\exp\bigl(-U(\sigma)\bigr),
 $$
 
-Équivalemment, l’énergie est
+où l’énergie $U(\sigma)$ pénalise les arêtes ferromagnétiques et antiferromagnétiques non satisfaites :
 
 $$
 U(\sigma) =
