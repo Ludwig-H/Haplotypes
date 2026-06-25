@@ -532,7 +532,7 @@ $$
 Le poids signé de l’arête $(e={i,j})$ est le log-rapport de vraisemblance :
 
 $$
-W_{ij} = \log \frac{ \mathbb P(\\{V_{ijz}\}_{z\in S_{ij}}\mid \Sigma_i\Sigma_j=+1) }{ \mathbb P(\\{V_{ijz}\}_{z\in S_{ij}}\mid \Sigma_i\Sigma_j=-1) }.
+W_{ij} = \log \frac{ \mathbb P(\\{V_{ijz}\\}_{z\in S_{ij}}\mid \Sigma_i\Sigma_j=+1) }{ \mathbb P(\\{V_{ijz}\\}_{z\in S_{ij}}\mid \Sigma_i\Sigma_j=-1) }.
 $$
 
 Comme les sites partagés sont conditionnellement indépendants,
