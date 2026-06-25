@@ -490,13 +490,11 @@ $$
 On définit :
 
 $$
-c_{ij} =
-=\\{z\in S_{ij}: V_{ijz}=+1\\},
+c_{ij} = |\\{z\in S_{ij}: V_{ijz}=+1\\}|,
 $$
 
 $$
-d_{ij} =
-=\\{z\in S_{ij}: V_{ijz}=-1\\}.
+d_{ij} = |\\{z\in S_{ij}: V_{ijz}=-1\\}|.
 $$
 
 Ainsi,
@@ -519,12 +517,7 @@ On suppose que les sites hétérozygotes utilisés dans le graphe sont connus vi
 Pour un site partagé $z$, la probabilité que le vote soit correct est
 
 $$
-q_{ijz} =
-= \mathbb P(V_{ijz}=\Sigma_i\Sigma_j)
-
-(1-\varepsilon_{iz})(1-\varepsilon_{jz})
-+
-\varepsilon_{iz}\varepsilon_{jz}.
+q_{ijz} = \mathbb P(V_{ijz}=\Sigma_i\Sigma_j) = (1-\varepsilon_{iz})(1-\varepsilon_{jz}) + \varepsilon_{iz}\varepsilon_{jz}.
 $$
 
 La probabilité que le vote soit inversé est
@@ -539,13 +532,7 @@ $$
 Le poids signé de l’arête $(e={i,j})$ est le log-rapport de vraisemblance :
 
 $$
-W_{ij} =
-\log
-\frac{
-\mathbb P(\\{V_{ijz}\\}_{z\in S_{ij}}\mid \Sigma_i\Sigma_j=+1)
-}{
-\mathbb P(\\{V_{ijz}\\}_{z\in S_{ij}}\mid \Sigma_i\Sigma_j=-1)
-}.
+W_{ij} = \log \frac{ \mathbb P(\\{V_{ijz}\}_{z\in S_{ij}}\mid \Sigma_i\Sigma_j=+1) }{ \mathbb P(\\{V_{ijz}\}_{z\in S_{ij}}\mid \Sigma_i\Sigma_j=-1) }.
 $$
 
 Comme les sites partagés sont conditionnellement indépendants,
@@ -640,7 +627,7 @@ Si $z$ est vraiment hétérozygote, le vote est informatif comme précédemment.
 
 Si $z$ n’est pas hétérozygote, le vote ne porte pas d’information sur $\Sigma_i\Sigma_j$.
 
-On note $R_{ijz}(v)$ la probabilité d’observer le vote $(v\in\\{-1,+1\\})$ lorsque le site n’est pas hétérozygote. Dans le modèle symétrique simple :
+On note $R_{ijz}(v)$ la probabilité d’observer le vote $(v\in\{-1,+1\})$ lorsque le site n’est pas hétérozygote. Dans le modèle symétrique simple :
 
 $$
 R_{ijz}(+1)=q_{ijz},
@@ -766,7 +753,7 @@ $$
 \propto
 \exp
 \left(
-\sum_{{i,j}\in E}
+\sum_{\{i,j\}\in E}
 W_{ij}\sigma_i\sigma_j
 \right).
 $$
@@ -775,10 +762,10 @@ $$
 
 $$
 U(\sigma) =
-\sum_{{i,j}:W_{ij}>0}
+\sum_{\{i,j\}:W_{ij}>0}
 |W_{ij}|\mathbf 1_{\sigma_i\neq\sigma_j}
 +
-\sum_{{i,j}:W_{ij}<0}
+\sum_{\{i,j\}:W_{ij}<0}
 |W_{ij}|\mathbf 1_{\sigma_i=\sigma_j}.
 $$
 
