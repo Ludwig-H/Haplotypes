@@ -429,7 +429,7 @@ Afin d'éviter d'évaluer le produit de parité sur l'arbre de Fenwick pour tout
 
 1. **Première étape (filtre court)** : On calcule la variation d'énergie uniquement sur la partie locale :
    $$
-   \Delta U_{\mathrm{short}} = \sum_{e \in \text{cross}_{\text{short}}[q]} y_e
+   \Delta U_{\mathrm{short}} = \sum_{e \in \text{cross-short}[q]} y_e
    $$
    On évalue le premier critère d'acceptation :
    $$
@@ -439,7 +439,7 @@ Afin d'éviter d'évaluer le produit de parité sur l'arbre de Fenwick pour tout
 
 2. **Seconde étape (filtre long)** : Si et seulement si la première étape est acceptée, on calcule la contribution des arêtes longues en évaluant leur signe courant à l'aide de l'arbre de Fenwick :
    $$
-   \Delta U_{\mathrm{long}} = \sum_{e \in \text{cross}_{\text{long}}[q]} W_e \prod_{t \in e} \tau_t
+   \Delta U_{\mathrm{long}} = \sum_{e \in \text{cross-long}[q]} W_e \prod_{t \in e} \tau_t
    $$
    On évalue le second critère d'acceptation :
    $$
@@ -519,7 +519,7 @@ corr_sum[p] += corr_value[p] * (T - last_time[p])
 C[p] = corr_sum[p] / T
 ```
 
-Les rejets et les mouvements nuls ne modifient pas l'état des paires. Ils sont automatiquement pris en compte par la durée $t - \text{last}_{\text{time}}[p]$ lors de la prochaine modification, où la variable `last_time` désigne le dernier pas de temps mis à jour.
+Les rejets et les mouvements nuls ne modifient pas l'état des paires. Ils sont automatiquement pris en compte par la durée $t - \text{last-time}[p]$ lors de la prochaine modification, où la variable `last_time` désigne le dernier pas de temps mis à jour.
 
 ## 14. Listes de paires affectées
 
