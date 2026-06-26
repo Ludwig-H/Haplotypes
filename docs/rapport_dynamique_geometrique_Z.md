@@ -31,11 +31,13 @@ $$
 U(\sigma) = \sum_{\lbrace i,j\rbrace: W_{ij}>0} |W_{ij}| \mathbf{1}_{\sigma_i \neq \sigma_j} + \sum_{\lbrace i,j\rbrace: W_{ij}<0} |W_{ij}| \mathbf{1}_{\sigma_i = \sigma_j}
 $$
 
-La postérieure cible est :
+La postérieure cible, à température inverse $\beta$, est :
 
 $$
-\mu(\sigma \mid W) \propto \exp\bigl(-U(\sigma)\bigr)
+\pi_\beta(\sigma \mid W) \propto \exp\bigl(-\beta U(\sigma)\bigr)
 $$
+
+Le cas $\beta=1$ correspond à la postérieure bayésienne non tempérée.
 
 ---
 
@@ -87,44 +89,73 @@ Ainsi, dans les variables duales, les mouvements de préfixe sont parfaitement l
 
 ---
 
-## 5. Définition des 5 mouvements de Glauber
+## 5. Définition des 4 mouvements de Glauber
 
-Pour un read $r$, on définit les 5 mouvements candidats d'inversion :
+Pour un read $r$, on définit les 4 mouvements candidats d'inversion :
 1.  $A_0 = \varnothing$ (mouvement nul, ne fait rien)
-2.  $A_1 = \lbrace r\rbrace$ (flip singleton)
+2.  $A_1 = \lbrace r\rbrace = P_{r-1} \triangle P_r$ (flip singleton)
 3.  $A_2 = P_{r-1}$ (flip du préfixe s'arrêtant avant $r$)
 4.  $A_3 = P_r$ (flip du préfixe incluant $r$)
-5.  $A_4 = P_{r+1}$ (flip du préfixe incluant $r+1$)
 
-Aux bords du domaine, les mouvements hors bornes sont rabattus :
+Aux bords du domaine et dans l'espace quotienté par le flip global :
 *   $P_{-1}$ est le mouvement nul $\varnothing$ ;
-*   $P_R$ est remplacé par $P_{R-1}$ (le flip global de tous les spins, qui a une variation d'énergie nulle).
+*   $P_{R-1}$ est le flip global de tous les spins, donc il est identifié au mouvement nul $\varnothing$.
+
+Dans les variables duales, en posant $e_q$ pour le flip du mur $q$ et $e_{-1}=e_{R-1}=0$, les mouvements sont :
+
+$$
+\mathcal{M}_r = \lbrace 0, e_{r-1}, e_r, e_{r-1}+e_r\rbrace.
+$$
+
+Cet ensemble est fermé par composition XOR. Il forme donc une classe locale de heat-bath exacte.
 
 ---
 
-## 6. Noyau de transition : Glauber avec correction de Metropolis-Hastings
+## 6. Noyau de transition : heat-bath local fermé
 
-Pour un read $r$ choisi uniformément dans $\lbrace 0, \dots, R-1\rbrace$, on évalue les variations d'énergie $\Delta U_m$ pour les 5 mouvements candidats $m \in \lbrace 0, \dots, 4\rbrace$.
+Pour un read $r$ choisi uniformément dans $\lbrace 0, \dots, R-1\rbrace$, on évalue les variations d'énergie $\Delta U(A)$ pour les mouvements distincts $A \in \mathcal{M}_r$.
 
-On souhaite choisir un mouvement $m$ avec une probabilité de type Glauber / Heat-Bath :
-
-$$
-p_m = \frac{\exp(-\beta \Delta U_m)}{\sum_{k=0}^4 \exp(-\beta \Delta U_k)}
-$$
-
-*Note : Le mouvement nul $m=0$ (correspondant à $\varnothing$) ayant une variation d'énergie nulle $\Delta U_0 = 0$, son poids de Boltzmann au dénominateur vaut toujours $\exp(-\beta \cdot 0) = 1$.*
-
-#### Non-fermeture du voisinage et correction de Metropolis-Hastings
-
-Le jeu de mouvements $\mathcal{M} = \lbrace \varnothing, \lbrace r\rbrace, P_{r-1}, P_r, P_{r+1}\rbrace$ n'est pas fermé par composition (par exemple, la composition de $P_{r-1}$ et $P_{r+1}$ n'appartient pas à $\mathcal{M}$). Les voisinages des états de départ et d'arrivée ne sont donc pas symétriques, ce qui brise la balance détaillée si l'on applique le choix Glauber directement.
-
-Pour restaurer rigoureusement la réversibilité de la chaîne par rapport à la distribution cible, on applique un filtre d'acceptation de Metropolis-Hastings. Si un mouvement $m > 0$ est sélectionné (menant à l'état $\sigma'$), on l'accepte avec la probabilité :
+On choisit un mouvement $A \in \mathcal{M}_r$ avec la probabilité de heat-bath :
 
 $$
-\alpha(\sigma \to \sigma') = \min\left(1, \frac{\sum_{k=0}^4 \exp(-\beta \Delta U_k(\sigma))}{\sum_{k=0}^4 \exp(-\beta \Delta U_k(\sigma'))}\right)
+p(A) = \frac{\exp(-\beta \Delta U(A))}{\sum_{B \in \mathcal{M}_r} \exp(-\beta \Delta U(B))}
 $$
 
-Où $\Delta U_k(\sigma')$ désigne les variations d'énergie des 5 mouvements évalués à partir du nouvel état $\sigma'$. Si le mouvement est rejeté, le système retourne à l'état $\sigma$.
+*Note : Le mouvement nul $A=\varnothing$ ayant une variation d'énergie nulle $\Delta U(\varnothing) = 0$, son poids de Boltzmann au dénominateur vaut toujours $\exp(-\beta \cdot 0) = 1$.*
+
+#### Réversibilité
+
+Pour $r$ fixé, les 4 mouvements forment une classe fermée :
+
+$$
+\mathcal{C}_r(\sigma) =
+\lbrace \sigma \oplus A : A \in \mathcal{M}_r\rbrace.
+$$
+
+Si $\sigma' \in \mathcal{C}_r(\sigma)$, alors $\mathcal{C}_r(\sigma') = \mathcal{C}_r(\sigma)$. La normalisation locale est donc la même depuis tous les états de la classe :
+
+$$
+H_r(\sigma) =
+\sum_{\eta \in \mathcal{C}_r(\sigma)} \exp(-\beta U(\eta)).
+$$
+
+Le noyau conditionnel :
+
+$$
+q_r(\sigma,\sigma') =
+\frac{\exp(-\beta U(\sigma'))}{H_r(\sigma)}
+\mathbf{1}_{\sigma' \in \mathcal{C}_r(\sigma)}
+$$
+
+vérifie directement la balance détaillée :
+
+$$
+\pi_\beta(\sigma) q_r(\sigma,\sigma')
+=
+\pi_\beta(\sigma') q_r(\sigma',\sigma).
+$$
+
+Le mélange uniforme sur $r$ conserve cette réversibilité. Aucun filtre Metropolis-Hastings n'est nécessaire.
 
 ---
 
@@ -148,8 +179,8 @@ $$
 \sigma_i \sigma_j = \prod_{t=i}^{j-1} \tau_t = (-1)^{\sum_{t=i}^{j-1} b_t \pmod 2} = (-1)^{\text{query}(j-1) \oplus \text{query}(i-1)}
 $$
 
-    Où $\text{query}(x)$ renvoie la somme XOR des bits de $0$ à $x$ dans l'arbre.
-2.  **Mise à jour de mur en $\mathcal{O}(\log R)$** : Un flip de préfixe $P_q$ (qui correspond géométriquement à inverser uniquement le mur $\tau_q$) nécessite uniquement de flipper le bit $b_q$ dans l'arbre via une opération `update(q, 1)`.
+    Où $\text{query}(x)$ renvoie la somme XOR des bits de $0$ à $x$ dans l'arbre, avec la convention $\text{query}(-1)=0$.
+2.  **Mise à jour de mur en $\mathcal{O}(\log R)$** : Un flip de préfixe $P_q$ (qui correspond géométriquement à inverser uniquement le mur $\tau_q$) nécessite uniquement de flipper le bit $b_q$ dans l'arbre via une opération `update(q, 1)`. Le flip singleton $\lbrace r\rbrace = P_{r-1} \triangle P_r$ se traduit par deux mises à jour adjacentes, `update(r-1, 1)` et `update(r, 1)`, en ignorant les murs hors domaine.
 
 ### 7.2 Schéma explicatif du calcul et de la mise à jour
 
@@ -171,10 +202,10 @@ Arbre de Fenwick           ┌─────▼─────┐    │    ┌
 --------------------------------------------------------------------------------------
 REQUÊTE D'UNE ARÊTE e = (1, 3) :
 Calcul de σ₁σ₃ = τ₁ * τ₂  ==>  b₁ ⊕ b₂
-  - query(2) = F[2] = b₀ ⊕ b₁
-  - query(0) = F[0] = 0 (ou vide)
-  - Résultat = query(2) ⊕ query(0) = b₀ ⊕ b₁ ⊕ 0 ⊕ b₀
-    Plus précisément, query(j-1) ⊕ query(i-1) extrait exactement b₁ ⊕ b₂ en temps O(log R).
+  - query(2) = b₀ ⊕ b₁ ⊕ b₂
+  - query(0) = b₀
+  - Résultat = query(2) ⊕ query(0) = b₁ ⊕ b₂
+    Plus généralement, query(j-1) ⊕ query(i-1) extrait exactement les murs entre i et j en temps O(log R).
 
 MISE À JOUR PAR UN FLIP DE PRÉFIXE P₂ :
 Renversement de τ₂ (b₂ ⊕= 1)  ==>  Appel unique à update(2, 1) qui met à jour F[2] et F[4] en O(log R).
@@ -233,24 +264,37 @@ graph TD
 À chaque pas de temps $t$ :
 
 1.  **Sélection** : Choisir un read $r$ uniformément dans $\lbrace 0, \dots, R-1\rbrace$.
-2.  **Calcul des énergies de proposition (état $\sigma$)** :
-    Pour chaque mouvement $m \in \lbrace 1..4\rbrace$ (qui correspond à une coupe $q_m$) :
-    
+2.  **Construction des candidats distincts** :
+    Construire les mouvements $\varnothing$, $\lbrace r\rbrace$, $P_{r-1}$ et $P_r$, puis supprimer les doublons éventuels aux bords.
+3.  **Calcul des énergies de proposition (état $\sigma$)** :
+    Le mouvement nul a une énergie $\Delta U(\varnothing)=0$. Pour un préfixe valide :
+
 $$
-\Delta U_m(\sigma) = \sum_{e \in \text{cross}[q_m]} W_e \cdot (-1)^{\text{query}(e.right-1) \oplus \text{query}(e.left-1)}
+\Delta U(P_q) =
+\sum_{e \in \text{cross}[q]} W_e \cdot
+(-1)^{\text{query}(e.right-1) \oplus \text{query}(e.left-1)}.
 $$
 
-    Le mouvement nul $m=0$ a une énergie $\Delta U_0(\sigma) = 0$. La décomposition de singleton $\lbrace r\rbrace = P_{r-1} \triangle P_r$ est évaluée par la somme des deux coupes de préfixes correspondantes.
-3.  **Sélection du mouvement** : Échantillonner $m \in \lbrace 0..4\rbrace$ selon les probabilités Glauber $p_m \propto \exp(-\beta \Delta U_m(\sigma))$.
-4.  **Cas d'arrêt rapide** : Si $m = 0$ (mouvement nul), le pas s'arrête immédiatement.
-5.  **Application temporaire** : Si $m > 0$, appliquer le flip (opération XOR sur l'index du mur correspondant dans l'arbre de Fenwick). L'état devient $\sigma'$.
-6.  **Calcul des énergies de retour (état $\sigma'$)** :
-    Évaluer les 5 variations d'énergie $\Delta U_k(\sigma')$ à partir de ce nouvel état en interrogeant à nouveau l'arbre de Fenwick.
-7.  **Acceptation / Rejet** :
-    Calculer la probabilité d'acceptation $\alpha$ (ratio des sommes de Boltzmann locales).
-    Tirer un nombre uniforme $U \sim \text{Unif}(0,1)$.
-    *   Si $U > \alpha$ : rejeter le mouvement et restaurer l'état dans l'arbre de Fenwick (ré-appliquer le XOR sur le mur).
-    *   Si $U \le \alpha$ : accepter définitivement le mouvement.
+    Pour le singleton :
+
+$$
+\Delta U(\lbrace r\rbrace) =
+\sum_{e=\lbrace r,j\rbrace} W_e \cdot
+(-1)^{\text{query}(e.right-1) \oplus \text{query}(e.left-1)}.
+$$
+
+    De manière équivalente, $\delta(\lbrace r\rbrace)$ est la différence symétrique des deux coupes adjacentes $\text{cross}[r-1]$ et $\text{cross}[r]$ ; les arêtes qui traversent les deux coupes ne doivent pas être comptées.
+4.  **Sélection du mouvement** :
+    Échantillonner un candidat $A$ selon les probabilités :
+
+$$
+p(A) =
+\frac{\exp(-\beta \Delta U(A))}
+{\sum_{B \in \mathcal{M}_r} \exp(-\beta \Delta U(B))}.
+$$
+
+5.  **Application du mouvement** :
+    Appliquer immédiatement le mouvement sélectionné dans l'arbre de Fenwick. Un préfixe $P_q$ déclenche `update(q, 1)` si $q$ est un mur valide ; le singleton $\lbrace r\rbrace$ déclenche les deux mises à jour valides `update(r-1, 1)` et `update(r, 1)`. Aucun calcul de retour n'est effectué.
 
 ---
 
@@ -269,7 +313,13 @@ $$
 \text{cross}[q] = \lbrace  e \in E : \text{left}[e] \le q < \text{right}[e] \rbrace
 $$
 
-Cette structure permet d'accéder instantanément à la liste des arêtes traversées par une coupe $q$. La complexité d'évaluation d'une coupe est de $\mathcal{O}(|\text{cross}[q]| \log R)$.
+Cette structure permet d'accéder instantanément à la liste des arêtes traversées par une coupe $q$. Pour les flips singletons, on stocke aussi :
+
+$$
+\text{incident}[r] = \lbrace e \in E : \text{left}[e] = r \text{ ou } \text{right}[e] = r \rbrace.
+$$
+
+On peut également obtenir cette liste comme différence symétrique des deux coupes adjacentes $\text{cross}[r-1]$ et $\text{cross}[r]$, en ignorant les coupes hors domaine. La complexité d'évaluation d'une coupe est de $\mathcal{O}(|\text{cross}[q]| \log R)$, et celle d'un singleton est de $\mathcal{O}(|\text{incident}[r]| \log R)$.
 
 ---
 
@@ -281,13 +331,13 @@ $$
 \sup_q |\text{cross}[q]| = \mathcal{O}(1)
 $$
 
-Le coût d'évaluation des 5 mouvements candidats et de l'acceptation Metropolis-Hastings est en **$\mathcal{O}(\log R)$**. Ce coût logarithmique est extrêmement performant et garantit une excellente scalabilité même en présence de reads très longs couvrant de nombreuses coupes.
+Le coût d'évaluation des 4 mouvements candidats est en **$\mathcal{O}(\log R)$**. Ce coût logarithmique est extrêmement performant et garantit une excellente scalabilité même en présence de reads très longs couvrant de nombreuses coupes.
 
 ---
 
 ## 11. Estimation des corrélations spin-spin $k$-hop
 
-On estime l'espérance des corrélations $C_{ij} = \mathbb{E}_{\mu}[\sigma_i\sigma_j]$ pour toutes les paires à distance de graphe au plus $k$ (ensemble $\mathcal{P}_k$).
+On estime l'espérance des corrélations $C_{ij} = \mathbb{E}_{\pi_\beta}[\sigma_i\sigma_j]$ pour toutes les paires à distance de graphe au plus $k$ (ensemble $\mathcal{P}_k$).
 
 On maintient de manière creuse (*sparse*) pour chaque paire $p=(i,j)$ :
 ```python
@@ -298,7 +348,7 @@ last_time[p]
 
 ### Accumulation événementielle
 Pour éviter de mettre à jour toutes les paires à chaque itération, on utilise une accumulation événementielle :
-Lorsqu'un mouvement est accepté au pas de temps $t$ et sépare la paire $p$ (c'est-à-dire que le flip coupe l'intervalle de la paire), on met à jour sa somme cumulée :
+Lorsqu'un mouvement non nul est appliqué au pas de temps $t$ et sépare la paire $p$ (c'est-à-dire que le flip coupe l'intervalle de la paire), on met à jour sa somme cumulée :
 ```python
 corr_sum[p] += corr_value[p] * (t - last_time[p])
 corr_value[p] *= -1
@@ -324,22 +374,23 @@ $$
 ### Phase 1 : Structures de Données et Indexation
 1.  Construire la liste des arêtes $E$ avec `left`, `right` et `weight`.
 2.  Construire les listes de coupe `cross[q]` pour chaque mur $q \in \lbrace 0, \dots, R-2\rbrace$.
-3.  Initialiser l'arbre de Fenwick de taille $R-1$ avec des bits à $0$ (représentant $\tau_t = 1$ partout, soit des spins identiques $\sigma_i = \sigma_0$ pour tout $i$).
+3.  Construire les listes d'incidence `incident[r]` pour l'évaluation directe des flips singletons.
+4.  Initialiser l'arbre de Fenwick de taille $R-1$ avec des bits à $0$ (représentant $\tau_t = 1$ partout, soit des spins identiques $\sigma_i = \sigma_0$ pour tout $i$).
 
-### Phase 2 : Noyau de transition Glauber-MH
+### Phase 2 : Noyau de transition Glauber fermé
 1.  Coder les fonctions de requête XOR de l'arbre de Fenwick.
 2.  Implémenter la routine d'évaluation d'une coupe $\Delta U(P_q)$.
-3.  Implémenter la décomposition des singletons en différence de deux coupes de préfixes.
-4.  Implémenter la boucle de transition (calcul Glauber, sélection, application temporaire, calcul de retour, filtrage Metropolis-Hastings).
+3.  Implémenter l'évaluation des singletons $\Delta U(\lbrace r\rbrace)$ via `incident[r]` ou via la différence symétrique des coupes adjacentes.
+4.  Implémenter la boucle de transition heat-bath (calcul des 4 candidats, sélection, application directe).
 
 ### Phase 3 : Accumulateur de corrélations
 1.  Construire $\mathcal{P}_k$ par une recherche en largeur (BFS) limitée à la profondeur $k$.
 2.  Indexer les paires par listes de coupe $\mathcal{P}_{\text{cross}}(q)$.
-3.  Implémenter l'accumulation événementielle sur les paires impactées lors de chaque transition validée.
+3.  Implémenter l'accumulation événementielle sur les paires impactées lors de chaque transition appliquée.
 
 ---
 
 ## 13. Conclusion
 
-La dynamique géométrique de Glauber / Heat-Bath à 5 mouvements, couplée à un arbre de Fenwick modulo 2, fournit un cadre d'échantillonnage optimal et rigoureux pour le problème d'haplotypage. 
-En traitant toutes les arêtes comme des interactions à longue portée évaluées paresseusement, nous éliminons le besoin de structures physiques complexes en mémoire. Les requêtes et mises à jour s'effectuent toutes en temps logarithmique $\mathcal{O}(\log R)$. Enfin, le filtre Metropolis-Hastings corrige exactement la non-fermeture géométrique des propositions, garantissant la convergence vers la postérieure bayésienne ciblée.
+La dynamique géométrique de Glauber / Heat-Bath à 4 mouvements, couplée à un arbre de Fenwick modulo 2, fournit un cadre d'échantillonnage optimal et rigoureux pour le problème d'haplotypage.
+En traitant toutes les arêtes comme des interactions à longue portée évaluées paresseusement, nous éliminons le besoin de structures physiques complexes en mémoire. Les requêtes et mises à jour s'effectuent toutes en temps logarithmique $\mathcal{O}(\log R)$. Enfin, le choix du voisinage fermé $\lbrace \varnothing, \lbrace r\rbrace, P_{r-1}, P_r\rbrace$ transforme chaque étape en véritable heat-bath local, sans correction Metropolis-Hastings.
