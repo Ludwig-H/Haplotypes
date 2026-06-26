@@ -353,6 +353,39 @@ Le calcul exact se déroule ainsi à la fin de la simulation :
     $$
     *(avec $t_0 = 1$ et $t_{m+1} = T+1$)*.
 
+### 11.3 Intégration de l'HMM de WhatsHap pour l'estimation de $\varepsilon$
+Pour obtenir des probabilités d'erreur $\varepsilon_{iz}$ ultra-précises et robustes aux décalages locaux d'alignement provoqués par les indels (insertions/délétions), le framework délègue le calcul des vraisemblances à WhatsHap via son API Python.
+
+Pour chaque fragment de lecture $i$ couvrant un variant $z$, WhatsHap effectue un réalignement local par **HMM par paires** (Pair HMM) sur les deux allèles de référence ($0$) et alternatif ($1$). Ce modèle calcule les vraisemblances conditionnelles :
+
+$$
+L_i(0) = \mathbb{P}(\text{read}_i \mid \text{allèle}_z = 0), \quad L_i(1) = \mathbb{P}(\text{read}_i \mid \text{allèle}_z = 1)
+$$
+
+Le score de qualité de phred $Q_{iz}$ retourné par WhatsHap est directement dérivé du rapport de ces deux vraisemblances :
+
+$$
+Q_{iz} = \text{clip}\left( -10 \log_{10} \mathbb{P}(\text{erreur}), 0, 40 \right)
+$$
+
+Où la probabilité d'erreur effective est :
+
+$$
+\varepsilon_{iz} = \frac{\min\bigl( L_i(0), L_i(1) \bigr)}{L_i(0) + L_i(1)} = 10^{-\frac{Q_{iz}}{10}}
+$$
+
+Cette probabilité d'erreur effective $\varepsilon_{iz}$ est ensuite directement injectée dans le calcul de la probabilité d'accord $q_{ijz}$ et du poids $W_{ij}$ entre deux reads $i$ et $j$ :
+
+$$
+q_{ijz} = (1 - \varepsilon_{iz})(1 - \varepsilon_{jz}) + \varepsilon_{iz}\varepsilon_{jz}
+$$
+
+$$
+W_{ij} = \sum_{z \in S_{ij}} V_{ijz} \log \frac{q_{ijz}}{1 - q_{ijz}}
+$$
+
+Cette méthode assure une cohérence bayésienne parfaite puisque chaque terme de la somme correspond au rapport de vraisemblance réel issu de l'alignement local sous HMM, éliminant les faux signaux générés par les indels.
+
 ---
 
 ## 12. Plan d'implémentation mis à jour
