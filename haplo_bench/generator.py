@@ -6,12 +6,13 @@ import numpy as np
 import pandas as pd
 
 def generate(config_path, out_dir, seed=None):
-    if seed is not None:
-        np.random.seed(seed)
-        random.seed(seed)
-        
     with open(config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
+        
+    effective_seed = seed if seed is not None else config.get("seed")
+    if effective_seed is not None:
+        np.random.seed(effective_seed)
+        random.seed(effective_seed)
         
     preset = config.get("preset", "pacbio_hifi")
     
