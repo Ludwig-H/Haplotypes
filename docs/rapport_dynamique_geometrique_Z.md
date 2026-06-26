@@ -46,7 +46,7 @@ Le cas $\beta=1$ correspond à la postérieure bayésienne non tempérée.
 Soit $A$ un ensemble de sommets que l'on flippe (renversement de spins) :
 
 $$
-\sigma_{i}'= \begin{cases} -\sigma_{i}, & i \in A \\\\\\\\ \sigma_{i}, & i \notin A \end{cases}
+\sigma_{i}'= \begin{cases} -\sigma_{i}, & i \in A \\\\ \sigma_{i}, & i \notin A \end{cases}
 $$
 
 Seules les arêtes coupées par $A$ changent de satisfaction. On note la coupe induite par $A$ :
@@ -324,58 +324,55 @@ Le coût d'évaluation des 4 mouvements candidats est en **$\mathcal{O}(\log R)$
 
 ---
 
-## 11. Estimation des corrélations spin-spin $k$-hop
+## 11. Estimation des corrélations spin-spin $k$-hop par historique d'événements (Stratégie B)
 
-On estime l'espérance des corrélations $C_{ij} = \mathbb{E}_{\pi_{\beta}}[\sigma_{i}\sigma_{j}]$ pour toutes les paires à distance de graphe au plus $k$ (ensemble $\mathcal{P}_{k}$).
+Pour estimer les corrélations $C_{ij} = \mathbb{E}_{\pi_{\beta}}[\sigma_i \sigma_j]$ pour toutes les paires de reads à distance de graphe au plus $k$ (ensemble $\mathcal{P}_k$), on exploite la nature géométrique de la ligne $\mathbb{Z}$.
 
-On maintient de manière creuse (*sparse*) pour chaque paire $p=(i,j)$ :
-```python
-corr_value[p] = sigma_i * sigma_j
-corr_sum[p]
-last_time[p]
-```
+Au lieu de calculer ou de mettre à jour les produits de spins pendant la boucle MCMC principale, on enregistre simplement l'historique des retournements de parois de domaine (murs).
 
-### Accumulation événementielle
-Pour éviter de mettre à jour toutes les paires à chaque itération, on utilise une accumulation événementielle :
-Lorsqu'un mouvement non nul est appliqué au pas de temps $t$ et sépare la paire $p$ (c'est-à-dire que le flip coupe l'intervalle de la paire), on met à jour sa somme cumulée :
-```python
-corr_sum[p] += corr_value[p] * (t - last_time[p])
-corr_value[p] *= -1
-last_time[p] = t
-```
+### 11.1 Journalisation des événements
+Durant la simulation, on maintient pour chaque mur $q \in \lbrace 0, \dots, R-2\rbrace$ la liste chronologique des instants (pas de simulation $t \in [1, T]$) où le mur $q$ a été inversé.
+En pratique, on utilise deux tableaux plats pré-alloués de taille maximale $2T$ :
+*   `flip_steps` : stocke le pas $t$ de chaque inversion de mur.
+*   `flip_walls` : stocke l'indice du mur $q$ correspondant.
 
-À la fin de l'échantillonnage (temps $T$), on effectue un flush final :
-```python
-corr_sum[p] += corr_value[p] * (T - last_time[p])
-C[p] = corr_sum[p] / T
-```
+À la fin de la simulation, on trie ces événements par mur en temps linéaire $\mathcal{O}(T + R)$ via un tri par comptage. On obtient pour chaque mur $q$ une liste ordonnée d'instants de flip $T_q = \lbrace t_1, t_2, \dots\rbrace$.
 
-Les paires affectées par une coupe $q$ sont pré-calculées dans la liste :
+### 11.2 Reconstitution et Intégration Temporelle
+Pour une paire de reads $(i, j)$ avec $i < j$, le produit $\sigma_i(t)\sigma_j(t) = \prod_{k=i}^{j-1} \tau_k(t)$ ne peut changer de signe que lors d'un événement impactant l'intervalle de parois $[i, j-1]$.
 
-$$
-\mathcal{P}_{\text{cross}}(q) = \lbrace p = (i,j) \in \mathcal{P}_{k} : i \le q < j \rbrace
-$$
+Le calcul exact se déroule ainsi à la fin de la simulation :
+1.  **Fusion des événements** : On réunit et on trie l'ensemble des instants d'inversion des murs de l'intervalle $[i, j-1]$ :
+    $$
+    U_{ij} = \bigcup_{k=i}^{j-1} T_k
+    $$
+2.  **Filtrage par parité** : Si un pas de temps $t$ apparaît un nombre pair de fois dans $U_{ij}$, ses effets s'annulent par produit $(-1) \times (-1) = 1$. On filtre $U_{ij}$ pour ne conserver que les instants apparaissant un nombre impair de fois, formant la liste triée $\lbrace t_1, t_2, \dots, t_m\rbrace$.
+3.  **Intégration temporelle** : Le produit de spins est constant par morceaux sur les intervalles $[t_s, t_{s+1} - 1]$. On calcule la somme cumulée de ces produits sur toute la trajectoire en temps $\mathcal{O}(|U_{ij}|)$ :
+    $$
+    C_{ij} = \frac{1}{T} \sum_{s=0}^m (-1)^s (t_{s+1} - t_s)
+    $$
+    *(avec $t_0 = 1$ et $t_{m+1} = T+1$)*.
 
 ---
 
-## 12. Plan d'implémentation
+## 12. Plan d'implémentation mis à jour
 
 ### Phase 1 : Structures de Données et Indexation
 1.  Construire la liste des arêtes $E$ avec `left`, `right` et `weight`.
 2.  Construire les listes de coupe `cross[q]` pour chaque mur $q \in \lbrace 0, \dots, R-2\rbrace$.
 3.  Construire les listes d'incidence `incident[r]` pour l'évaluation directe des flips singletons.
-4.  Initialiser l'arbre de Fenwick de taille $R-1$ avec des bits à $0$ (représentant $\tau_{t} = 1$ partout, soit des spins identiques $\sigma_{i} = \sigma_{0}$ pour tout $i$).
+4.  Initialiser l'arbre de Fenwick de taille $R-1$ avec des bits à $0$.
 
-### Phase 2 : Noyau de transition Glauber fermé
+### Phase 2 : Noyau de transition Glauber et Journalisation
 1.  Coder les fonctions de requête XOR de l'arbre de Fenwick.
-2.  Implémenter la routine d'évaluation d'une coupe $\Delta U(P_{q})$.
-3.  Implémenter l'évaluation des singletons $\Delta U(\lbrace r\rbrace)$ via `incident[r]` ou via la différence symétrique des coupes adjacentes.
-4.  Implémenter la boucle de transition heat-bath (calcul des 4 candidats, sélection, application directe).
+2.  Implémenter la routine d'évaluation d'une coupe $\Delta U(P_q)$ et des singletons $\Delta U(\lbrace r\rbrace)$.
+3.  Pré-allouer les tableaux plats `flip_steps` et `flip_walls` de taille $2T$.
+4.  À chaque pas $t$ acceptant un mouvement non nul, ajouter le pas $t$ et le(s) mur(s) impacté(s) au journal.
 
-### Phase 3 : Accumulateur de corrélations
-1.  Construire $\mathcal{P}_{k}$ par une recherche en largeur (BFS) limitée à la profondeur $k$.
-2.  Indexer les paires par listes de coupe $\mathcal{P}_{\text{cross}}(q)$.
-3.  Implémenter l'accumulation événementielle sur les paires impactées lors de chaque transition appliquée.
+### Phase 3 : Post-traitement et Estimation des corrélations
+1.  Construire $\mathcal{P}_k$ (paires à distance au plus $k$).
+2.  Trier le journal d'événements pour obtenir les listes indexées par mur.
+3.  Pour chaque paire de $\mathcal{P}_k$, fusionner les listes chronologiques, filtrer par parité et calculer la corrélation par intégration directe sur toute la trajectoire.
 
 ---
 
