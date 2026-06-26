@@ -17,26 +17,26 @@ Le benchmark reste volontairement simple : il isole le problème statistique d�
 On considère une paire de chromosomes homologues, discrétisés sur
 
 $$
-\\{0,\\ldots,L-1\\}.
+\lbrace 0,\\ldots,L-1\rbrace.
 $$
 
 Chaque lecture $i$ est définie par :
 
-* une position centrale $x_i$ ;
+* une position centrale $x_{i}$ ;
 * une longueur fixée $2\ell+1$ dans le modèle de base ;
 * un haplotype d’origine caché
 
 $$
-\\Sigma_i\in\\{-1,+1\\}.
+\\Sigma_{i}\in\lbrace -1,+1\rbrace.
 $$
 
 La lecture couvre l’intervalle
 
 $$
-I_i=[x_i-\ell,x_i+\ell]\cap \\{0,\\ldots,L-1\\}.
+I_{i}=[x_{i}-\ell,x_{i}+\ell]\cap \lbrace 0,\\ldots,L-1\rbrace.
 $$
 
-L’objectif est de reconstruire les $\Sigma_i$ à partir des lectures bruitées.
+L’objectif est de reconstruire les $\Sigma_{i}$ à partir des lectures bruitées.
 
 ---
 
@@ -150,28 +150,19 @@ Le nombre de lectures ne doit pas être fixé à la main par défaut. Il est cal
 Si les lectures ont longueur moyenne $\mathbb E[R]$, alors
 
 $$
-n_{\mathrm{reads}} =
-\left\lceil
-\frac{cL}{\mathbb E[R]}
-\right\rceil.
+n_{\mathrm{reads}} = \left\lceil \frac{cL}{\mathbb E[R]} \right\rceil.
 $$
 
 Dans le cas paired-end, si une molécule produit deux lectures de longueur $R$, alors
 
 $$
-n_{\mathrm{pairs}} =
-\left\lceil
-\frac{cL}{2R}
-\right\rceil.
+n_{\mathrm{pairs}} = \left\lceil \frac{cL}{2R} \right\rceil.
 $$
 
 Dans le modèle à longueur fixée $R=2\ell+1$,
 
 $$
-n_{\mathrm{reads}} =
-\left\lceil
-\frac{cL}{2\ell+1}
-\right\rceil.
+n_{\mathrm{reads}} = \left\lceil \frac{cL}{2\ell+1} \right\rceil.
 $$
 
 ---
@@ -207,7 +198,7 @@ Le chromosome 22 est le meilleur choix pour les tests initiaux : il est suffisam
 
 Le benchmark utilise par défaut uniquement des SNPs bialléliques hétérozygotes.
 
-Chaque position $(z\in\\{0,\\ldots,L-1\\})$ est hétérozygote avec probabilité
+Chaque position $(z\in\lbrace 0,\\ldots,L-1\rbrace)$ est hétérozygote avec probabilité
 
 $$
 \rho_{\mathrm{het}}.
@@ -216,13 +207,13 @@ $$
 Dans le modèle Bernoulli homogène :
 
 $$
-H_z\sim \text{Bernoulli}(\rho_{\mathrm{het}}).
+H_{z}\sim \text{Bernoulli}(\rho_{\mathrm{het}}).
 $$
 
 L’ensemble des sites hétérozygotes est
 
 $$
-\\mathcal V=\\{z:\\ H_z=1\\}.
+\\mathcal V=\lbrace z:\\\\ H_{z}=1\rbrace.
 $$
 
 Le nombre de variants hétérozygotes vérifie
@@ -283,46 +274,43 @@ Le preset `toy_dense` est utile pour les petites instances et les tests algorith
 On encode l’orientation du site par
 
 $$
-A_z\in\\{-1,+1\\}.
+A_{z}\in\lbrace -1,+1\rbrace.
 $$
 
-Pour une lecture issue de l’haplotype $\Sigma_i$, l’allèle vrai au site $z$ est
+Pour une lecture issue de l’haplotype $\Sigma_{i}$, l’allèle vrai au site $z$ est
 
 $$
-X_{iz}^{\mathrm{true}}=\Sigma_i A_z.
+X_{iz}^{\mathrm{true}}=\Sigma_{i} A_{z}.
 $$
 
 Ainsi, pour deux lectures $(i,j)$, au même site hétérozygote $z$, on a
 
 $$
-X_{iz}^{\mathrm{true}}X_{jz}^{\mathrm{true}} =
-\Sigma_i\Sigma_j.
+X_{iz}^{\mathrm{true}}X_{jz}^{\mathrm{true}} = \Sigma_{i}\Sigma_{j}.
 $$
 
-L’orientation $A_z$ disparaît donc dans les comparaisons entre lectures.
+L’orientation $A_{z}$ disparaît donc dans les comparaisons entre lectures.
 
 ---
 
 ## 7. Génération des lectures
 
-Dans le modèle de base, chaque lecture a une position centrale $x_i$ tirée uniformément :
+Dans le modèle de base, chaque lecture a une position centrale $x_{i}$ tirée uniformément :
 
 $$
-x_i\sim \text{Unif}\\{0,\\ldots,L-1\\}.
+x_{i}\sim \text{Unif}\lbrace 0,\\ldots,L-1\rbrace.
 $$
 
 La lecture couvre
 
 $$
-I_i=[x_i-\ell,x_i+\ell]\cap \\{0,\\ldots,L-1\\}.
+I_{i}=[x_{i}-\ell,x_{i}+\ell]\cap \lbrace 0,\\ldots,L-1\rbrace.
 $$
 
 L’haplotype d’origine est tiré selon
 
 $$
-\mathbb P(\Sigma_i=+1)=\pi,
-\qquad
-\mathbb P(\Sigma_i=-1)=1-\pi.
+\mathbb P(\Sigma_{i}=+1)=\pi, \qquad \mathbb P(\Sigma_{i}=-1)=1-\pi.
 $$
 
 Par défaut :
@@ -348,17 +336,13 @@ reads:
 Pour une lecture $i$ couvrant un site hétérozygote $z$, l’allèle observé est
 
 $$
-Y_{iz} = X_{iz}^{\mathrm{true}}\xi_{iz} = \Sigma_i A_z\xi_{iz},
+Y_{iz} = X_{iz}^{\mathrm{true}}\xi_{iz} = \Sigma_{i} A_{z}\xi_{iz},
 $$
 
 où
 
 $$
-\xi_{iz}=
-\begin{cases}
-+1 & \text{avec probabilité } 1-\varepsilon_{iz} \\
--1 & \text{avec probabilité } \varepsilon_{iz}
-\end{cases}
+\xi_{iz}= \begin{cases} +1 & \text{avec probabilité } 1-\varepsilon_{iz} \\\\ -1 & \text{avec probabilité } \varepsilon_{iz} \end{cases}
 $$
 
 Dans le modèle homogène :
@@ -395,7 +379,7 @@ noise:
 Pour deux lectures $(i,j)$, on définit leur région d’intersection :
 
 $$
-O_{ij}=I_i\cap I_j.
+O_{ij}=I_{i}\cap I_{j}.
 $$
 
 Sa longueur est
@@ -407,21 +391,19 @@ $$
 Dans le modèle à longueur fixée sans effet de bord, si
 
 $$
-\Delta_{ij}=|x_i-x_j|,
+\Delta_{ij}=|x_{i}-x_{j}|,
 $$
 
 alors
 
 $$
-r_{ij} =
-\max(0,2\ell+1-\Delta_{ij}).
+r_{ij} = \max(0,2\ell+1-\Delta_{ij}).
 $$
 
 Les sites hétérozygotes partagés par les deux lectures sont
 
 $$
-S_{ij} =
-\mathcal V\cap O_{ij}.
+S_{ij} = \mathcal V\cap O_{ij}.
 $$
 
 Le nombre de sites hétérozygotes partagés est
@@ -439,8 +421,7 @@ $$
 Donc
 
 $$
-\mathbb E[m_{ij}\mid r_{ij}] =
-\rho_{\mathrm{het}}r_{ij}.
+\mathbb E[m_{ij}\mid r_{ij}] = \rho_{\mathrm{het}}r_{ij}.
 $$
 
 Une arête est créée si
@@ -452,10 +433,7 @@ $$
 La probabilité qu’une paire de lectures soit informative, conditionnellement à $r_{ij}$, est
 
 $$
-\mathbb P(m_{ij}\ge m_{\min}\mid r_{ij}) =
-\sum_{h=m_{\min}}^{r_{ij}}
-\binom{r_{ij}}{h}
-\rho_{\mathrm{het}}^{h}(1-\rho_{\mathrm{het}})^{r_{ij}-h}.
+\mathbb P(m_{ij}\ge m_{\min}\mid r_{ij}) = \sum_{h=m_{\min}}^{r_{ij}} \binom{r_{ij}}{h} \rho_{\mathrm{het}}^{h}(1-\rho_{\mathrm{het}})^{r_{ij}-h}.
 $$
 
 Pour $r_{ij}\rho_{\mathrm{het}}$ petit, l’approximation de Poisson donne
@@ -477,24 +455,23 @@ $$
 Comme
 
 $$
-Y_{iz}Y_{jz} =
-\Sigma_i\Sigma_j\xi_{iz}\xi_{jz},
+Y_{iz}Y_{jz} = \Sigma_{i}\Sigma_{j}\xi_{iz}\xi_{jz},
 $$
 
 on a, en absence d’erreur,
 
 $$
-V_{ijz}=\Sigma_i\Sigma_j.
+V_{ijz}=\Sigma_{i}\Sigma_{j}.
 $$
 
 On définit :
 
 $$
-c_{ij} = |\\{z\in S_{ij}: V_{ijz}=+1\\}|,
+c_{ij} = |\lbrace z\in S_{ij}: V_{ijz}=+1\rbrace|,
 $$
 
 $$
-d_{ij} = |\\{z\in S_{ij}: V_{ijz}=-1\\}|.
+d_{ij} = |\lbrace z\in S_{ij}: V_{ijz}=-1\rbrace|.
 $$
 
 Ainsi,
@@ -517,32 +494,25 @@ On suppose que les sites hétérozygotes utilisés dans le graphe sont connus vi
 Pour un site partagé $z$, la probabilité que le vote soit correct est
 
 $$
-q_{ijz} = \mathbb P(V_{ijz}=\Sigma_i\Sigma_j) = (1-\varepsilon_{iz})(1-\varepsilon_{jz}) + \varepsilon_{iz}\varepsilon_{jz}.
+q_{ijz} = \mathbb P(V_{ijz}=\Sigma_{i}\Sigma_{j}) = (1-\varepsilon_{iz})(1-\varepsilon_{jz}) + \varepsilon_{iz}\varepsilon_{jz}.
 $$
 
 La probabilité que le vote soit inversé est
 
 $$
-1-q_{ijz} =
-(1-\varepsilon_{iz})\varepsilon_{jz}
-+
-\varepsilon_{iz}(1-\varepsilon_{jz}).
+1-q_{ijz} = (1-\varepsilon_{iz})\varepsilon_{jz} + \varepsilon_{iz}(1-\varepsilon_{jz}).
 $$
 
 Le poids signé de l’arête $(e={i,j})$ est le log-rapport de vraisemblance :
 
 $$
-W_{ij} = \log \frac{ \mathbb P(\\{V_{ijz}\\}_{z\in S_{ij}}\mid \Sigma_i\Sigma_j=+1) }{ \mathbb P(\\{V_{ijz}\\}_{z\in S_{ij}}\mid \Sigma_i\Sigma_j=-1) }.
+W_{ij} = \log \frac{ \mathbb P(\lbrace V_{ijz}\rbrace_{z\in S_{ij}}\mid \Sigma_{i}\Sigma_{j}=+1) }{ \mathbb P(\lbrace V_{ijz}\rbrace_{z\in S_{ij}}\mid \Sigma_{i}\Sigma_{j}=-1) }.
 $$
 
 Comme les sites partagés sont conditionnellement indépendants,
 
 $$
-W_{ij} =
-\sum_{z\in S_{ij}}
-V_{ijz}
-\log
-\frac{q_{ijz}}{1-q_{ijz}}.
+W_{ij} = \sum_{z\in S_{ij}} V_{ijz} \log \frac{q_{ijz}}{1-q_{ijz}}.
 $$
 
 Dans le cas homogène $\varepsilon_{iz}=\varepsilon$, on a
@@ -554,10 +524,7 @@ $$
 et donc
 
 $$
-W_{ij} =
-(c_{ij}-d_{ij})
-\log
-\frac{q}{1-q}.
+W_{ij} = (c_{ij}-d_{ij}) \log \frac{q}{1-q}.
 $$
 
 Puisque
@@ -569,10 +536,7 @@ $$
 on peut aussi écrire
 
 $$
-W_{ij} =
-(2c_{ij}-m_{ij})
-\log
-\frac{q}{1-q}.
+W_{ij} = (2c_{ij}-m_{ij}) \log \frac{q}{1-q}.
 $$
 
 L’arête est attractive si
@@ -617,55 +581,37 @@ Mais conditionnellement aux sites hétérozygotes observés $S_{ij}$, le paramè
 Si chaque site hétérozygote $z$ possède une probabilité de confiance
 
 $$
-\gamma_z =
-\mathbb P(z\text{ vraiment hétérozygote}),
+\gamma_{z} = \mathbb P(z\text{ vraiment hétérozygote}),
 $$
 
 on peut utiliser le modèle de mélange suivant.
 
 Si $z$ est vraiment hétérozygote, le vote est informatif comme précédemment.
 
-Si $z$ n’est pas hétérozygote, le vote ne porte pas d’information sur $\Sigma_i\Sigma_j$.
+Si $z$ n’est pas hétérozygote, le vote ne porte pas d’information sur $\Sigma_{i}\Sigma_{j}$.
 
-On note $R_{ijz}(v)$ la probabilité d’observer le vote $(v\in\{-1,+1\})$ lorsque le site n’est pas hétérozygote. Dans le modèle symétrique simple :
+On note $R_{ijz}(v)$ la probabilité d’observer le vote $(v\in\lbrace -1,+1\rbrace)$ lorsque le site n’est pas hétérozygote. Dans le modèle symétrique simple :
 
 $$
-R_{ijz}(+1)=q_{ijz},
-\qquad
-R_{ijz}(-1)=1-q_{ijz}.
+R_{ijz}(+1)=q_{ijz}, \qquad R_{ijz}(-1)=1-q_{ijz}.
 $$
 
 Alors
 
 $$
-\mathbb P(V_{ijz}=v\mid \Sigma_i\Sigma_j=+1) =
-\gamma_z
-\mathbb P_{\mathrm{het}}(v\mid +1)
-+
-(1-\gamma_z)R_{ijz}(v),
+\mathbb P(V_{ijz}=v\mid \Sigma_{i}\Sigma_{j}=+1) = \gamma_{z} \mathbb P_{\mathrm{het}}(v\mid +1) + (1-\gamma_{z})R_{ijz}(v),
 $$
 
 et
 
 $$
-\mathbb P(V_{ijz}=v\mid \Sigma_i\Sigma_j=-1) =
-\gamma_z
-\mathbb P_{\mathrm{het}}(v\mid -1)
-+
-(1-\gamma_z)R_{ijz}(v).
+\mathbb P(V_{ijz}=v\mid \Sigma_{i}\Sigma_{j}=-1) = \gamma_{z} \mathbb P_{\mathrm{het}}(v\mid -1) + (1-\gamma_{z})R_{ijz}(v).
 $$
 
 Le poids devient
 
 $$
-W_{ij} =
-\sum_{z\in S_{ij}}
-\log
-\frac{
-\mathbb P(V_{ijz}\mid \Sigma_i\Sigma_j=+1)
-}{
-\mathbb P(V_{ijz}\mid \Sigma_i\Sigma_j=-1)
-}.
+W_{ij} = \sum_{z\in S_{ij}} \log \frac{ \mathbb P(V_{ijz}\mid \Sigma_{i}\Sigma_{j}=+1) }{ \mathbb P(V_{ijz}\mid \Sigma_{i}\Sigma_{j}=-1) }.
 $$
 
 Par défaut :
@@ -676,7 +622,7 @@ variants:
   gamma: 1.0
 ```
 
-Le mode `hard` correspond à $\gamma_z=1$ pour tous les sites exportés dans le VCF.
+Le mode `hard` correspond à $\gamma_{z}=1$ pour tous les sites exportés dans le VCF.
 
 ---
 
@@ -697,11 +643,11 @@ Si les lectures proviennent du même haplotype, alors le vrai vote est $+1$, que
 Donc
 
 $$
-\mathbb P(V_{ijz}=+1\mid \Sigma_i\Sigma_j=+1)=q_{ijz},
+\mathbb P(V_{ijz}=+1\mid \Sigma_{i}\Sigma_{j}=+1)=q_{ijz},
 $$
 
 $$
-\mathbb P(V_{ijz}=-1\mid \Sigma_i\Sigma_j=+1)=1-q_{ijz}.
+\mathbb P(V_{ijz}=-1\mid \Sigma_{i}\Sigma_{j}=+1)=1-q_{ijz}.
 $$
 
 Si les lectures proviennent d’haplotypes différents :
@@ -712,30 +658,17 @@ Si les lectures proviennent d’haplotypes différents :
 Ainsi,
 
 $$
-\mathbb P(V_{ijz}=+1\mid \Sigma_i\Sigma_j=-1) =
-(1-\rho_{\mathrm{het}})q_{ijz}
-+
-\rho_{\mathrm{het}}(1-q_{ijz}),
+\mathbb P(V_{ijz}=+1\mid \Sigma_{i}\Sigma_{j}=-1) = (1-\rho_{\mathrm{het}})q_{ijz} + \rho_{\mathrm{het}}(1-q_{ijz}),
 $$
 
 $$
-\mathbb P(V_{ijz}=-1\mid \Sigma_i\Sigma_j=-1) =
-(1-\rho_{\mathrm{het}})(1-q_{ijz})
-+
-\rho_{\mathrm{het}}q_{ijz}.
+\mathbb P(V_{ijz}=-1\mid \Sigma_{i}\Sigma_{j}=-1) = (1-\rho_{\mathrm{het}})(1-q_{ijz}) + \rho_{\mathrm{het}}q_{ijz}.
 $$
 
 Le poids est alors
 
 $$
-W_{ij} =
-\sum_{z\in O_{ij}}
-\log
-\frac{
-\mathbb P(V_{ijz}\mid \Sigma_i\Sigma_j=+1)
-}{
-\mathbb P(V_{ijz}\mid \Sigma_i\Sigma_j=-1)
-}.
+W_{ij} = \sum_{z\in O_{ij}} \log \frac{ \mathbb P(V_{ijz}\mid \Sigma_{i}\Sigma_{j}=+1) }{ \mathbb P(V_{ijz}\mid \Sigma_{i}\Sigma_{j}=-1) }.
 $$
 
 Ce mode donne un rôle explicite à $\rho_{\mathrm{het}}$ dans chaque terme du poids.
@@ -749,20 +682,13 @@ Il est toutefois déconseillé comme mode principal, car les sites homozygotes d
 Le graphe signé pondéré définit une postérieure de type Ising signé :
 
 $$
-\mu(\sigma\mid W)
-\propto
-\exp\bigl(-U(\sigma)\bigr),
+\mu(\sigma\mid W) \propto \exp\bigl(-U(\sigma)\bigr),
 $$
 
 où l’énergie $U(\sigma)$ pénalise les arêtes ferromagnétiques et antiferromagnétiques non satisfaites :
 
 $$
-U(\sigma) =
-\sum_{\{i,j\}:W_{ij}>0}
-|W_{ij}|\mathbf 1_{\sigma_i\neq\sigma_j}
-+
-\sum_{\{i,j\}:W_{ij}<0}
-|W_{ij}|\mathbf 1_{\sigma_i=\sigma_j}.
+U(\sigma) = \sum_{\lbrace i,j\rbrace:W_{ij}>0} |W_{ij}|\mathbf 1_{\sigma_{i}\neq\sigma_{j}} + \sum_{\lbrace i,j\rbrace:W_{ij}<0} |W_{ij}|\mathbf 1_{\sigma_{i}=\sigma_{j}}.
 $$
 
 ## 15. Formats du graphe
@@ -959,9 +885,7 @@ graph:
 Pour une paire correcte, les deux extrémités proviennent du même haplotype. Si elles sont modélisées comme deux nœuds distincts, on ajoute une arête ferromagnétique interne de poids
 
 $$
-J_{\mathrm{pair}} =
-\log
-\frac{1-\delta_{\mathrm{pair}}}{\delta_{\mathrm{pair}}}.
+J_{\mathrm{pair}} = \log \frac{1-\delta_{\mathrm{pair}}}{\delta_{\mathrm{pair}}}.
 $$
 
 Par défaut :
