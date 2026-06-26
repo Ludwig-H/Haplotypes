@@ -1,0 +1,21 @@
+{
+    "model": "haplo-bench",
+    "reference": {
+        "assembly": "GRCh38.p14",
+        "chromosome": "chr22",
+        "L": 600000
+    },
+    "variants": {
+        "density": 0.00075,
+        "model": "bernoulli"
+    },
+    "reads": {
+        "preset": "pacbio_hifi"
+    },
+    "graph": {
+        "n_nodes": 1000,
+        "n_edges": 28467,
+        "weighted": true,
+        "signed": true
+    }
+}
