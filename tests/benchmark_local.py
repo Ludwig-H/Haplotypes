@@ -209,7 +209,22 @@ def fenwick_query(tree, idx):
     return res
 
 @numba.njit
-def evaluate_cut(q, tree, cross_offsets, cross_left, cross_right, cross_weight):
+def get_cached_query(tree, idx, cache_vals, cache_steps, t):
+    if idx < 0:
+        return 0
+    if cache_steps[idx] == t:
+        return cache_vals[idx]
+    i = idx + 1
+    res = 0
+    while i > 0:
+        res ^= tree[i]
+        i -= i & (-i)
+    cache_vals[idx] = res
+    cache_steps[idx] = t
+    return res
+
+@numba.njit
+def evaluate_cut(q, tree, cross_offsets, cross_left, cross_right, cross_weight, cache_vals, cache_steps, t):
     start = cross_offsets[q]
     end = cross_offsets[q+1]
     du = 0.0
@@ -217,24 +232,32 @@ def evaluate_cut(q, tree, cross_offsets, cross_left, cross_right, cross_weight):
         i = cross_left[idx]
         j = cross_right[idx]
         w = cross_weight[idx]
-        xor_val = fenwick_query(tree, j-1) ^ fenwick_query(tree, i-1)
+        q_j = get_cached_query(tree, j-1, cache_vals, cache_steps, t)
+        q_i = get_cached_query(tree, i-1, cache_vals, cache_steps, t)
+        xor_val = q_j ^ q_i
         spin_prod = 1.0 - 2.0 * float(xor_val)
         du += w * spin_prod
     return du
 
 @numba.njit
-def evaluate_singleton(r, tree, incident_offsets, incident_left, incident_right, incident_weight):
+def evaluate_incident(r, tree, incident_offsets, incident_left, incident_right, incident_weight, cache_vals, cache_steps, t):
     start = incident_offsets[r]
     end = incident_offsets[r+1]
-    du = 0.0
+    du_L = 0.0
+    du_R = 0.0
     for idx in range(start, end):
         i = incident_left[idx]
         j = incident_right[idx]
         w = incident_weight[idx]
-        xor_val = fenwick_query(tree, j-1) ^ fenwick_query(tree, i-1)
+        q_j = get_cached_query(tree, j-1, cache_vals, cache_steps, t)
+        q_i = get_cached_query(tree, i-1, cache_vals, cache_steps, t)
+        xor_val = q_j ^ q_i
         spin_prod = 1.0 - 2.0 * float(xor_val)
-        du += w * spin_prod
-    return du
+        if i == r:
+            du_R += w * spin_prod
+        else:
+            du_L += w * spin_prod
+    return du_L, du_R
 
 @numba.njit
 def mcmc_loop(steps, R, beta, tree, 
@@ -250,18 +273,33 @@ def mcmc_loop(steps, R, beta, tree,
     total_flips = 0
     report_interval = steps // 10
     if report_interval == 0: report_interval = 1
+    
+    # Initialize query cache
+    cache_vals = np.empty(R, dtype=np.int32)
+    cache_steps = np.zeros(R, dtype=np.int32)
+    
     for t in range(1, steps + 1):
         r = (t - 1) if t <= R else np.random.randint(0, R)
         du0 = 0.0
-        du1 = evaluate_singleton(r, tree, incident_offsets, incident_left, incident_right, incident_weight)
+        
+        # Evaluate left and right incident contributions
+        du_L, du_R = evaluate_incident(r, tree, incident_offsets, incident_left, incident_right, incident_weight, cache_vals, cache_steps, t)
+        
+        # singleton is du_L + du_R
+        du1 = du_L + du_R
+        
+        # prefix cut at r-1
         if r - 1 >= 0:
-            du2 = evaluate_cut(r-1, tree, cross_offsets, cross_left, cross_right, cross_weight)
+            du2 = evaluate_cut(r-1, tree, cross_offsets, cross_left, cross_right, cross_weight, cache_vals, cache_steps, t)
         else:
             du2 = 0.0
+            
+        # prefix cut at r computed algebraically in O(1)
         if r < R - 1:
-            du3 = evaluate_cut(r, tree, cross_offsets, cross_left, cross_right, cross_weight)
+            du3 = du2 - du_L + du_R
         else:
             du3 = 0.0
+            
         min_du = min(du0, du1, du2, du3)
         w0 = np.exp(-beta * (du0 - min_du))
         w1 = np.exp(-beta * (du1 - min_du))
