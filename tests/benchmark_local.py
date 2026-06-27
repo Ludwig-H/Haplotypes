@@ -332,29 +332,40 @@ def run_instance(instance_dir, steps, k_hop, beta, sample_freq):
 if __name__ == "__main__":
     results = []
     
-    # Instance 1: small/instance_100x
-    res = run_instance(
-        "/workspaces/Haplotypes/benchmark/small/instance_100x",
-        steps=50000, k_hop=2, beta=2.0, sample_freq=100
-    )
-    results.append(res)
-    
-    # Instance 2: small/instance_10x
-    res = run_instance(
-        "/workspaces/Haplotypes/benchmark/small/instance_10x",
-        steps=100000, k_hop=2, beta=1.5, sample_freq=200
-    )
-    results.append(res)
-    
-    # Instance 3: instance_seed_1
-    res = run_instance(
-        "/workspaces/Haplotypes/benchmark/instance_seed_1",
-        steps=150000, k_hop=2, beta=1.2, sample_freq=1000
-    )
-    results.append(res)
+    # Instance 1: benchmark/difficult/instance_noisy_small
+    if os.path.exists("/workspaces/Haplotypes/benchmark/difficult/instance_noisy_small"):
+        res = run_instance(
+            "/workspaces/Haplotypes/benchmark/difficult/instance_noisy_small",
+            steps=100000, k_hop=2, beta=1.5, sample_freq=200
+        )
+        results.append(res)
+        
+    # Instance 2: benchmark/difficult/instance_noisy_medium
+    if os.path.exists("/workspaces/Haplotypes/benchmark/difficult/instance_noisy_medium"):
+        res = run_instance(
+            "/workspaces/Haplotypes/benchmark/difficult/instance_noisy_medium",
+            steps=150000, k_hop=2, beta=1.2, sample_freq=300
+        )
+        results.append(res)
+        
+    # Instance 3: benchmark/difficult/instance_large_noisy_15x_1
+    if os.path.exists("/workspaces/Haplotypes/benchmark/difficult/instance_large_noisy_15x_1"):
+        res = run_instance(
+            "/workspaces/Haplotypes/benchmark/difficult/instance_large_noisy_15x_1",
+            steps=200000, k_hop=2, beta=1.0, sample_freq=400
+        )
+        results.append(res)
+        
+    # S'il n'y a pas d'instances difíciles, lancer les instances standard par défaut
+    if not results:
+        res = run_instance(
+            "/workspaces/Haplotypes/benchmark/small/instance_100x",
+            steps=50000, k_hop=2, beta=2.0, sample_freq=100
+        )
+        results.append(res)
     
     df = pd.DataFrame(results)
     print("\n" + "=" * 80)
-    print("FINAL BENCHMARK SUMMARY")
+    print("FINAL BENCHMARK SUMMARY (PacBio CLR Noisy Simulation)")
     print("=" * 80)
     print(df.to_string(index=False))
