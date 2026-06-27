@@ -421,14 +421,14 @@ def solve_signed_spectral(W, gpu=True, laplacian='unnormalized', verbose=False):
                 D_inv_sqrt = csp.diags(d_inv_sqrt)
                 A_norm_gpu = D_inv_sqrt @ W_gpu @ D_inv_sqrt
                 vals, vecs = cupy_eigsh(A_norm_gpu, k=1, which='LA')
-                return cp.asnumpy(vecs[:, 0]), cp.asnumpy(vals[0])
+                return cp.asnumpy(vecs[:, 0]), 1.0 - cp.asnumpy(vals[0])
             else:
                 D_gpu = csp.diags(cp.array(degrees))
                 L_gpu = D_gpu - W_gpu
                 vals, vecs = cupy_eigsh(L_gpu, k=1, which='SA')
                 return cp.asnumpy(vecs[:, 0]), cp.asnumpy(vals[0])
         except Exception as e:
-            if verbose: print(f"⚠️ [GPU] Échec. Repli sur le CPU...")
+            if verbose: print(f"⚠️ [GPU] Échec: {e}. Repli sur le CPU...")
             
     if laplacian == 'normalized':
         d_inv_sqrt = np.zeros(R, dtype=np.float32)
@@ -437,13 +437,22 @@ def solve_signed_spectral(W, gpu=True, laplacian='unnormalized', verbose=False):
         D_inv_sqrt = sp.diags(d_inv_sqrt)
         A_norm = D_inv_sqrt @ W @ D_inv_sqrt
         try:
-            vals, vecs = eigsh(A_norm, k=1, which='LA')
+            vals, vecs = eigsh(A_norm, k=1, which='LA', tol=1e-5)
             return vecs[:, 0], 1.0 - vals[0]
-        except Exception:
-            I = sp.eye(R, format='csr')
-            L_sym = I - A_norm
-            vals, vecs = eigsh(L_sym, k=1, which='SM')
-            return vecs[:, 0], vals[0]
+        except Exception as e:
+            if verbose: print(f"⚠️ [solve_signed_spectral CPU Normalized] eigsh LA a échoué: {e}. Essai avec lobpcg...")
+            try:
+                from scipy.sparse.linalg import lobpcg
+                I = sp.eye(R, format='csr')
+                L_sym = I - A_norm
+                X = np.random.normal(size=(R, 1))
+                vals, vecs = lobpcg(L_sym, X, largest=False, tol=1e-5, maxiter=200)
+                return vecs[:, 0], vals[0]
+            except Exception as e2:
+                if verbose: print(f"⚠️ [solve_signed_spectral CPU Normalized] lobpcg a échoué: {e2}. Repli sur la version dense...")
+                A_norm_dense = A_norm.toarray()
+                vals, vecs = np.linalg.eigh(A_norm_dense)
+                return vecs[:, -1], 1.0 - vals[-1]
     else:
         D = sp.diags(degrees)
         L = D - W
@@ -451,11 +460,20 @@ def solve_signed_spectral(W, gpu=True, laplacian='unnormalized', verbose=False):
             sigma = 2.0 * np.max(degrees)
             I = sp.eye(R, format='csr')
             M = sigma * I - L
-            vals, vecs = eigsh(M, k=1, which='LA')
+            vals, vecs = eigsh(M, k=1, which='LA', tol=1e-5)
             return vecs[:, 0], sigma - vals[0]
-        except Exception:
-            vals, vecs = eigsh(L, k=1, which='SM')
-            return vecs[:, 0], vals[0]
+        except Exception as e:
+            if verbose: print(f"⚠️ [solve_signed_spectral CPU Unnormalized] eigsh LA a échoué: {e}. Essai avec lobpcg...")
+            try:
+                from scipy.sparse.linalg import lobpcg
+                X = np.random.normal(size=(R, 1))
+                vals, vecs = lobpcg(L, X, largest=False, tol=1e-5, maxiter=200)
+                return vecs[:, 0], vals[0]
+            except Exception as e2:
+                if verbose: print(f"⚠️ [solve_signed_spectral CPU Unnormalized] lobpcg a échoué: {e2}. Repli sur la version dense...")
+                L_dense = D.toarray() - W.toarray()
+                vals, vecs = np.linalg.eigh(L_dense)
+                return vecs[:, 0], vals[0]
 
 def solve_signed_spectral_by_components(W, gpu=True, laplacian='unnormalized', verbose=False):
     from scipy.sparse.csgraph import connected_components
