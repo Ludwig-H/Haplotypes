@@ -411,6 +411,10 @@ def mcmc_loop(steps, R, beta, tree,
 
 def solve_signed_spectral(W, gpu=True, laplacian='unnormalized', verbose=False):
     R = W.shape[0]
+    if gpu and GPU_AVAILABLE:
+        import cupy as cp
+        import cupyx.scipy.sparse as csp
+        from cupyx.scipy.sparse.linalg import eigsh as cupy_eigsh
     if R <= 15:
         W_dense = W.toarray()
         abs_W = np.abs(W_dense)
