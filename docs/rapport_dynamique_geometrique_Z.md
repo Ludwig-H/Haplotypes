@@ -347,9 +347,13 @@ Le calcul exact se déroule ainsi à la fin de la simulation :
     U_{ij} = \bigcup_{k=i}^{j-1} T_k
     $$
 2.  **Filtrage par parité** : Si un pas de temps $t$ apparaît un nombre pair de fois dans $U_{ij}$, ses effets s'annulent par produit $(-1) \times (-1) = 1$. On filtre $U_{ij}$ pour ne conserver que les instants apparaissant un nombre impair de fois, formant la liste triée $\lbrace t_1, t_2, \dots, t_m\rbrace$.
-3.  **Intégration temporelle** : Le produit de spins est constant par morceaux sur les intervalles $[t_s, t_{s+1} - 1]$. On calcule la somme cumulée de ces produits sur toute la trajectoire en temps $\mathcal{O}(|U_{ij}|)$ :
+3.  **Extraction du signe initial** : On calcule le signe initial $S_{ij}^{(0)} \in \lbrace -1, +1\rbrace$ du produit de spins à $t=1$ à partir du Fenwick tree de départ (`tree_init`) :
     $$
-    C_{ij} = \frac{1}{T} \sum_{s=0}^m (-1)^s (t_{s+1} - t_s)
+    S_{ij}^{(0)} = (-1)^{\text{query}(j-1) \oplus \text{query}(i-1)}
+    $$
+4.  **Intégration temporelle** : Le produit de spins est constant par morceaux sur les intervalles $[t_s, t_{s+1} - 1]$. On calcule la somme cumulée de ces produits sur toute la trajectoire en temps $\mathcal{O}(|U_{ij}|)$ en tenant compte du signe initial :
+    $$
+    C_{ij} = \frac{1}{T} \sum_{s=0}^m S_{ij}^{(0)} (-1)^s (t_{s+1} - t_s)
     $$
     *(avec $t_0 = 1$ et $t_{m+1} = T+1$)*.
 
@@ -398,8 +402,9 @@ Cette méthode assure une cohérence bayésienne parfaite puisque chaque terme d
 
 ### Phase 2 : Noyau de transition Glauber et Journalisation
 1.  Coder les fonctions de requête XOR de l'arbre de Fenwick.
-2.  Implémenter la routine d'évaluation d'une coupe $\Delta U(P_q)$ et des singletons $\Delta U(\lbrace r\rbrace)$.
-3.  Pré-allouer les tableaux plats `flip_steps` et `flip_walls` de taille $2T$.
+2.  Implémenter l'initialisation de l'arbre de Fenwick à partir des spins de la Baseline spectrale pour éliminer la phase de burn-in thermique.
+3.  Implémenter la routine d'évaluation d'une coupe $\Delta U(P_q)$ et des singletons $\Delta U(\lbrace r\rbrace)$.
+4.  Pré-allouer les tableaux plats `flip_steps` et `flip_walls` de taille $2T$.
 4.  À chaque pas $t$ acceptant un mouvement non nul, ajouter le pas $t$ et le(s) mur(s) impacté(s) au journal.
 
 ### Phase 3 : Post-traitement et Estimation des corrélations
