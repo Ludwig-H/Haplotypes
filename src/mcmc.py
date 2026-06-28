@@ -74,8 +74,7 @@ def build_incident_arrays_numba(R, left, right, weight):
 
 def build_structures_fast(R, W):
     """
-    Construit les tableaux d'adjacence plats requis par la recherche k-hop et le Gibbs MCMC.
-    W est la matrice d'adjacence sparse (CSR) issue de build_signed_graph.
+    Construit les structures compressées requises pour la recherche k-hop et la MCMC par Fenwick.
     """
     coo = W.tocoo()
     left = np.minimum(coo.row, coo.col).astype(np.int32)
@@ -144,12 +143,243 @@ def get_pairs_bfs(R, incident_offsets, incident_left, incident_right, k_hop):
     
     return out_left, out_right
 
+def build_pairs_sparse(R, W, k, verbose=False):
+    """
+    Génère les paires k-hop à partir de la matrice d'adjacence sparse W.
+    """
+    if verbose:
+        print(f"💻 [build_pairs_sparse] Génération des paires {k}-hop via BFS Numba...")
+        
+    coo = W.tocoo()
+    left = np.minimum(coo.row, coo.col).astype(np.int32)
+    right = np.maximum(coo.row, coo.col).astype(np.int32)
+    weight = coo.data.astype(np.float64)
+    
+    incident_offsets, incident_left, incident_right, incident_weight = build_incident_arrays_numba(R, left, right, weight)
+    out_left, out_right = get_pairs_bfs(R, incident_offsets, incident_left, incident_right, k)
+    return out_left, out_right
+
+@numba.njit
+def fenwick_update(tree, idx, val):
+    i = idx + 1
+    n = len(tree)
+    while i < n:
+        tree[i] ^= val
+        i += i & (-i)
+
+@numba.njit
+def fenwick_query(tree, idx):
+    if idx < 0:
+        return 0
+    i = idx + 1
+    res = 0
+    while i > 0:
+        res ^= tree[i]
+        i -= i & (-i)
+    return res
+
+@numba.njit
+def get_cached_query(tree, idx, cache_vals, cache_steps, t):
+    if idx < 0:
+        return 0
+    if cache_steps[idx] == t:
+        return cache_vals[idx]
+    i = idx + 1
+    res = 0
+    while i > 0:
+        res ^= tree[i]
+        i -= i & (-i)
+    cache_vals[idx] = res
+    cache_steps[idx] = t
+    return res
+
+@numba.njit
+def evaluate_cut(q, tree, cross_offsets, cross_left, cross_right, cross_weight, cache_vals, cache_steps, t):
+    start = cross_offsets[q]
+    end = cross_offsets[q+1]
+    du = 0.0
+    for idx in range(start, end):
+        i = cross_left[idx]
+        j = cross_right[idx]
+        w = cross_weight[idx]
+        q_j = get_cached_query(tree, j-1, cache_vals, cache_steps, t)
+        q_i = get_cached_query(tree, i-1, cache_vals, cache_steps, t)
+        xor_val = q_j ^ q_i
+        spin_prod = 1.0 - 2.0 * float(xor_val)
+        du += w * spin_prod
+    return du
+
+@numba.njit
+def evaluate_incident(r, tree, incident_offsets, incident_left, incident_right, incident_weight, cache_vals, cache_steps, t):
+    start = incident_offsets[r]
+    end = incident_offsets[r+1]
+    du_L = 0.0
+    du_R = 0.0
+    for idx in range(start, end):
+        i = incident_left[idx]
+        j = incident_right[idx]
+        w = incident_weight[idx]
+        q_j = get_cached_query(tree, j-1, cache_vals, cache_steps, t)
+        q_i = get_cached_query(tree, i-1, cache_vals, cache_steps, t)
+        xor_val = q_j ^ q_i
+        spin_prod = 1.0 - 2.0 * float(xor_val)
+        if i == r:
+            du_R += w * spin_prod
+        else:
+            du_L += w * spin_prod
+    return du_L, du_R
+
+@numba.njit
+def mcmc_loop(steps, R, beta, tree,
+              cross_offsets, cross_left, cross_right, cross_weight,
+              incident_offsets, incident_left, incident_right, incident_weight,
+              pairs_left, pairs_right, verbose=False):
+    """
+    Exécute la boucle MCMC sur l'arbre de Fenwick et calcule les corrélations temporelles des paires k-hop.
+    """
+    tree_init = tree.copy()
+
+    max_flips = 2 * steps
+    flip_steps = np.empty(max_flips, dtype=np.int32)
+    flip_walls = np.empty(max_flips, dtype=np.int32)
+    flip_counts = np.zeros(R - 1, dtype=np.int32)
+    total_flips = 0
+
+    cache_vals = np.empty(R, dtype=np.int32)
+    cache_steps = np.zeros(R, dtype=np.int32)
+
+    for t in range(1, steps + 1):
+        r = (t - 1) if t <= R else random.randint(0, R - 1)
+        du0 = 0.0
+
+        du_L, du_R = evaluate_incident(r, tree, incident_offsets, incident_left, incident_right, incident_weight, cache_vals, cache_steps, t)
+        du1 = du_L + du_R
+
+        if r - 1 >= 0:
+            du2 = evaluate_cut(r-1, tree, cross_offsets, cross_left, cross_right, cross_weight, cache_vals, cache_steps, t)
+        else:
+            du2 = 0.0
+
+        if r < R - 1:
+            du3 = du2 - du_L + du_R
+        else:
+            du3 = 0.0
+
+        min_du = min(du0, du1, du2, du3)
+        w0 = np.exp(-beta * (du0 - min_du))
+        w1 = np.exp(-beta * (du1 - min_du))
+        w2 = np.exp(-beta * (du2 - min_du))
+        w3 = np.exp(-beta * (du3 - min_du))
+        sum_w = w0 + w1 + w2 + w3
+        p0 = w0 / sum_w
+        p1 = w1 / sum_w
+        p2 = w2 / sum_w
+        
+        rand_val = random.random()
+        chosen_move = 0
+        if rand_val < p0:
+            chosen_move = 0
+        elif rand_val < p0 + p1:
+            chosen_move = 1
+        elif rand_val < p0 + p1 + p2:
+            chosen_move = 2
+        else:
+            chosen_move = 3
+
+        if chosen_move == 1:
+            if r - 1 >= 0:
+                fenwick_update(tree, r-1, 1)
+                flip_steps[total_flips] = t
+                flip_walls[total_flips] = r-1
+                total_flips += 1
+                flip_counts[r-1] += 1
+            if r < R - 1:
+                fenwick_update(tree, r, 1)
+                flip_steps[total_flips] = t
+                flip_walls[total_flips] = r
+                total_flips += 1
+                flip_counts[r] += 1
+        elif chosen_move == 2:
+            if r - 1 >= 0:
+                fenwick_update(tree, r-1, 1)
+                flip_steps[total_flips] = t
+                flip_walls[total_flips] = r-1
+                total_flips += 1
+                flip_counts[r-1] += 1
+        elif chosen_move == 3:
+            if r < R - 1:
+                fenwick_update(tree, r, 1)
+                flip_steps[total_flips] = t
+                flip_walls[total_flips] = r
+                total_flips += 1
+                flip_counts[r] += 1
+
+    actual_flip_steps = flip_steps[:total_flips]
+    actual_flip_walls = flip_walls[:total_flips]
+    offsets = np.zeros(R, dtype=np.int32)
+    for k in range(R - 1):
+        offsets[k+1] = offsets[k] + flip_counts[k]
+        
+    grouped_steps = np.empty(total_flips, dtype=np.int32)
+    current_idx = offsets.copy()
+    for i in range(total_flips):
+        k = actual_flip_walls[i]
+        t = actual_flip_steps[i]
+        pos = current_idx[k]
+        grouped_steps[pos] = t
+        current_idx[k] += 1
+
+    P = len(pairs_left)
+    correlations = np.empty(P, dtype=np.float64)
+    for p in range(P):
+        u = pairs_left[p]
+        v = pairs_right[p]
+        sum_counts = 0
+        for k in range(u, v):
+            sum_counts += flip_counts[k]
+
+        xor_init = fenwick_query(tree_init, v-1) ^ fenwick_query(tree_init, u-1)
+        initial_sign = 1.0 - 2.0 * float(xor_init)
+
+        if sum_counts == 0:
+            correlations[p] = initial_sign
+            continue
+            
+        temp = np.empty(sum_counts, dtype=np.int32)
+        idx_temp = 0
+        for k in range(u, v):
+            start = offsets[k]
+            count = flip_counts[k]
+            for idx_grouped in range(start, start + count):
+                temp[idx_temp] = grouped_steps[idx_grouped]
+                idx_temp += 1
+                
+        temp = np.sort(temp)
+        sum_prod = 0.0
+        current_sign = initial_sign
+        last_t = 1
+        idx = 0
+        while idx < sum_counts:
+            t_val = temp[idx]
+            cnt = 1
+            while idx + 1 < sum_counts and temp[idx + 1] == t_val:
+                cnt += 1
+                idx += 1
+            if cnt % 2 == 1:
+                sum_prod += current_sign * (t_val - last_t)
+                current_sign = -current_sign
+                last_t = t_val
+            idx += 1
+        sum_prod += current_sign * (steps + 1 - last_t)
+        correlations[p] = sum_prod / float(steps)
+        
+    return correlations
+
 @numba.njit
 def mcmc_gibbs_sampling_numba(R, incident_offsets, incident_left, incident_right, incident_weight,
                               initial_spins, steps, beta):
     """
     Simule la MCMC avec échantillonnage de Gibbs local sur les spins des reads.
-    Retourne la probabilité marginale de spin de chaque read.
     """
     spins = initial_spins.copy()
     spin_sums = np.zeros(R, dtype=np.float64)

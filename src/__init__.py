@@ -10,6 +10,10 @@ from .spectral import signed_spectral_clustering
 from .mcmc import (
     build_structures_fast,
     get_pairs_bfs,
+    build_pairs_sparse,
+    mcmc_loop,
+    fenwick_update,
+    fenwick_query,
     mcmc_gibbs_sampling_numba
 )
 from .evaluation import (

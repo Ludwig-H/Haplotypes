@@ -93,22 +93,46 @@ def main():
         corr = 1 - corr
     print(f"  -> Précision du clustering spectral baseline : {corr:.2%}")
     
-    # 6. MCMC k-hop Gibbs Sampling
+    # 6. MCMC k-hop par Fenwick et second Clustering Spectral
     t0 = time.time()
-    # Construire les structures de recherche rapide
     structures = src.build_structures_fast(R, W)
+    cross_offsets, cross_left, cross_right, cross_weight = structures[0], structures[1], structures[2], structures[3]
     incident_offsets = structures[4]
     incident_left = structures[5]
     incident_right = structures[6]
     incident_weight = structures[7]
     
-    print("⏳ Lancement de la MCMC k-hop Gibbs sampling optimisée (Numba)...")
-    post_probs = src.mcmc_gibbs_sampling_numba(
-        R, incident_offsets, incident_left, incident_right, incident_weight,
-        pred_baseline.astype(np.float64), mcmc_steps, beta
+    print(f"⏳ Génération des paires {k_hop}-hop...")
+    pairs_left, pairs_right = src.build_pairs_sparse(R, W, k_hop, verbose=False)
+    P = len(pairs_left)
+    print(f"  -> Nombre de paires {k_hop}-hop : {P}")
+    
+    print("⏳ Initialisation de la MCMC avec les spins de la Baseline spectrale...")
+    tree = np.zeros(R, dtype=np.int32)
+    tau_init = (pred_baseline[:-1] != pred_baseline[1:]).astype(np.int32)
+    for k in range(R - 1):
+        if tau_init[k] == 1:
+            src.fenwick_update(tree, k, 1)
+            
+    print(f"⏳ Lancement de la boucle MCMC ({mcmc_steps} étapes)...")
+    correlations = src.mcmc_loop(
+        mcmc_steps, R, beta, tree,
+        cross_offsets, cross_left, cross_right, cross_weight,
+        incident_offsets, incident_left, incident_right, incident_weight,
+        pairs_left, pairs_right, verbose=False
     )
-    pred_mcmc = np.where(post_probs >= 0.5, 1.0, -1.0)
-    print(f"✅ MCMC terminée en {time.time() - t0:.2f}s.")
+    
+    print("⏳ Résolution spectrale sur la matrice de corrélation...")
+    import scipy.sparse as sp
+    row_C = np.concatenate([pairs_left, pairs_right])
+    col_C = np.concatenate([pairs_right, pairs_left])
+    data_C = np.concatenate([correlations, correlations])
+    W_C = sp.coo_matrix((data_C, (row_C, col_C)), shape=(R, R)).tocsr()
+    
+    v_C = src.signed_spectral_clustering(W_C, type="unnormalized", use_gpu=False)
+    pred_mcmc = np.sign(v_C)
+    pred_mcmc[pred_mcmc == 0] = 1
+    print(f"✅ MCMC et second clustering terminés en {time.time() - t0:.2f}s.")
     
     corr_mcmc = np.mean(pred_mcmc == true_spin_vec)
     if corr_mcmc < 0.5:
