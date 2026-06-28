@@ -14,7 +14,7 @@ except ImportError:
     pass
 
 def compute_signed_laplacian(W):
-    """
+    r"""
     Calcule le Laplacien signé d'une matrice d'adjacence signée W.
     L = D - W_sym, où D_ii = \sum_j |W_ij| et W_sym = W + W^T.
     """
