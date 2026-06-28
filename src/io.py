@@ -95,11 +95,14 @@ def load_variants_dict(vcf_path, chromosome):
             sample = record.samples[0]
             if sample.allele_indices[0] != sample.allele_indices[1]:
                 if len(record.ref) == 1 and len(record.alts[0]) == 1:
-                    variants[record.pos - 1] = {
-                        "ref": record.ref,
-                        "alt": record.alts[0],
-                        "gt": sample.allele_indices
-                    }
+                    ref_allele = record.ref.upper()
+                    alt_allele = record.alts[0].upper()
+                    if ref_allele in ('A', 'C', 'G', 'T') and alt_allele in ('A', 'C', 'G', 'T'):
+                        variants[record.pos - 1] = {
+                            "ref": record.ref,
+                            "alt": record.alts[0],
+                            "gt": sample.allele_indices
+                        }
     return variants
 
 def build_hic_bam_from_pairs(pairs_path, bam_path, variants, max_pairs=10000000000000, error_rate=0.01):
@@ -172,6 +175,8 @@ def build_hic_bam_from_pairs(pairs_path, bam_path, variants, max_pairs=100000000
                     base2 = "N"
                 
                 if base1 == "N" and base2 == "N":
+                    continue
+                if base1 == '*' or base2 == '*':
                     continue
                 
                 read_name = f"hic_pair_{pair_idx}"
