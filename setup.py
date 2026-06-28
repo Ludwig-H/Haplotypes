@@ -8,6 +8,9 @@ setup(
         "numpy",
         "pyyaml",
         "pandas",
+        "pysam",
+        "numba",
+        "scipy",
     ],
     entry_points={
         "console_scripts": [
