@@ -5,11 +5,31 @@ import random
 import bisect
 from collections import defaultdict
 
+import sys
+
 def download_file(url, local_path):
-    """Télécharge un fichier depuis une URL vers un chemin local si non présent."""
+    """Télécharge un fichier depuis une URL vers un chemin local avec une barre de progression en temps réel."""
     if not os.path.exists(local_path):
-        print(f"📥 Téléchargement de {url} -> {local_path}...")
-        urllib.request.urlretrieve(url, local_path)
+        print(f"📥 Démarrage du téléchargement de {url} -> {local_path}...")
+        
+        def reporthook(block_num, block_size, total_size):
+            if total_size <= 0:
+                return
+            downloaded = block_num * block_size
+            percent = min(100.0, downloaded * 100.0 / total_size)
+            bar_len = 40
+            filled_len = int(round(bar_len * percent / 100.0))
+            bar = '█' * filled_len + '-' * (bar_len - filled_len)
+            
+            downloaded_mb = downloaded / (1024 * 1024)
+            total_mb = total_size / (1024 * 1024)
+            
+            sys.stdout.write(f"\r   [{bar}] {percent:.1f}% ({downloaded_mb:.1f}/{total_mb:.1f} Mo)")
+            sys.stdout.flush()
+            
+        urllib.request.urlretrieve(url, local_path, reporthook=reporthook)
+        sys.stdout.write("\n✅ Téléchargement terminé avec succès.\n")
+        sys.stdout.flush()
     else:
         print(f"✅ {local_path} déjà présent localement.")
 
